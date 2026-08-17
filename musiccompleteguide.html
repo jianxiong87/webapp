@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎻🎹 小提琴 & 钢琴完整学费指南</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f4f8; color: #1a202c; font-size: 14px; }
+
+/* ── Top nav ── */
+.top-nav { background: linear-gradient(135deg, #1a365d, #2b6cb0); padding: 14px 16px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.top-nav h1 { font-size: 16px; font-weight: 700; color: white; margin-bottom: 10px; }
+.nav-tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 0; }
+.nav-tab { padding: 8px 14px; border: none; border-radius: 8px 8px 0 0; font-size: 12px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
+.nav-tab.active { background: #f0f4f8; color: #1a365d; }
+.nav-tab:hover:not(.active) { background: rgba(255,255,255,0.25); color: white; }
+
+/* ── Page content ── */
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* ── Common components ── */
+.section-title { font-size: 16px; font-weight: 700; color: #1a365d; margin-bottom: 4px; }
+.section-sub { font-size: 11px; color: #718096; margin-bottom: 14px; }
+.formula-box { background: #ebf8ff; border-left: 3px solid #3182ce; border-radius: 0 8px 8px 0; padding: 10px 12px; font-size: 11px; color: #2a4365; margin-bottom: 14px; line-height: 1.6; }
+.formula-box strong { color: #1a365d; }
+.note-box { background: #fffbeb; border-left: 3px solid #f6ad55; border-radius: 0 8px 8px 0; padding: 10px 12px; font-size: 11px; color: #744210; line-height: 1.7; margin-bottom: 12px; }
+.note-box strong { display: block; margin-bottom: 4px; color: #c05621; font-size: 12px; }
+.info-box { background: #ebf8ff; border-left: 3px solid #3182ce; border-radius: 0 8px 8px 0; padding: 10px 12px; font-size: 11px; color: #2a4365; line-height: 1.7; margin-bottom: 12px; }
+.info-box strong { display: block; margin-bottom: 4px; color: #1a365d; font-size: 12px; }
+.green-box { background: #f0fff4; border-left: 3px solid #48bb78; border-radius: 0 8px 8px 0; padding: 10px 12px; font-size: 11px; color: #22543d; line-height: 1.7; margin-bottom: 12px; }
+.green-box strong { display: block; margin-bottom: 4px; color: #276749; font-size: 12px; }
+
+/* ── Sub-tabs ── */
+.subtabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.subtab { padding: 7px 11px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; background: white; color: #718096; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.2s; }
+.subtab.active { background: #1a365d; color: white; }
+.subcontent { display: none; }
+.subcontent.active { display: block; }
+
+/* ── Summary cards ── */
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.s-card { background: white; border-radius: 10px; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.s-label { font-size: 10px; color: #718096; margin-bottom: 3px; }
+.s-value { font-size: 17px; font-weight: 700; color: #1a365d; }
+.s-sub { font-size: 10px; color: #a0aec0; margin-top: 1px; }
+.s-card.hl { background: linear-gradient(135deg, #1a365d, #2b6cb0); }
+.s-card.hl .s-label { color: rgba(255,255,255,0.7); }
+.s-card.hl .s-value { color: white; font-size: 19px; }
+.s-card.hl .s-sub { color: rgba(255,255,255,0.6); }
+.s-card.span2 { grid-column: 1/-1; display: flex; justify-content: space-between; align-items: center; }
+
+/* ── Tables ── */
+.table-wrap { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 14px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 480px; }
+thead tr { background: #1a365d; color: white; }
+thead th { padding: 10px; text-align: left; font-size: 11px; font-weight: 600; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid #e2e8f0; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:nth-child(even) { background: #f7fafc; }
+tbody tr.nafa-row { background: #ebf8ff !important; }
+tbody tr.best { background: #f0fff4 !important; }
+tbody tr.highlight { background: #ebf8ff !important; }
+td { padding: 9px 10px; font-size: 12px; white-space: nowrap; }
+td.school { font-weight: 700; color: #2b6cb0; }
+td.price { font-weight: 700; color: #c05621; }
+td.annual { font-weight: 700; color: #1a365d; }
+td.saving { font-weight: 700; color: #22543d; }
+td.year { font-weight: 700; color: #2b6cb0; }
+td.total-col { font-weight: 700; color: #1a365d; }
+td.monthly { color: #e53e3e; font-weight: 600; }
+td.unit { color: #e53e3e; font-weight: 600; }
+td.dim { color: #a0aec0; font-size: 11px; }
+
+/* ── Badges ── */
+.badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.b-green { background: #c6f6d5; color: #22543d; }
+.b-blue { background: #bee3f8; color: #2a4365; }
+.b-orange { background: #fbd38d; color: #7b341e; }
+.b-red { background: #fed7d7; color: #c53030; }
+.b-purple { background: #e9d8fd; color: #44337a; }
+.b-gray { background: #e2e8f0; color: #4a5568; }
+.b-yellow { background: #fefcbf; color: #744210; }
+
+/* ── Shop / School cards ── */
+.school-card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 12px; border-left: 4px solid #3182ce; }
+.school-card.top { border-left-color: #e53e3e; }
+.school-card.near { border-left-color: #48bb78; }
+.sc-name { font-size: 14px; font-weight: 700; color: #1a365d; margin-bottom: 3px; }
+.sc-addr { font-size: 12px; color: #4a5568; margin: 3px 0; line-height: 1.5; }
+.sc-tel { font-size: 12px; color: #2b6cb0; margin: 2px 0; }
+.sc-hours { font-size: 11px; color: #718096; margin: 2px 0; }
+.sc-note { font-size: 11px; color: #2d3748; margin-top: 6px; line-height: 1.5; background: #f7fafc; padding: 6px 8px; border-radius: 6px; }
+.sc-tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ── Verdict ── */
+.verdict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.verdict-card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.verdict-card.win { border-top: 3px solid #48bb78; }
+.verdict-card.lose { border-top: 3px solid #fc8181; }
+.verdict-title { font-size: 13px; font-weight: 700; color: #1a365d; margin-bottom: 8px; }
+.verdict-item { font-size: 11px; color: #4a5568; padding: 3px 0; line-height: 1.5; }
+.v-pro::before { content: "✅ "; }
+.v-con::before { content: "❌ "; }
+
+/* ── Bar chart ── */
+.chart-section { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 16px; }
+.chart-title { font-size: 13px; font-weight: 600; color: #2d3748; margin-bottom: 12px; }
+.bar-row { display: flex; align-items: center; margin-bottom: 8px; gap: 8px; }
+.bar-label { font-size: 11px; color: #4a5568; width: 42px; flex-shrink: 0; }
+.bar-track { flex: 1; background: #e2e8f0; border-radius: 4px; height: 20px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 6px; font-size: 10px; font-weight: 600; color: white; }
+.bar-amount { font-size: 11px; color: #2d3748; font-weight: 600; width: 70px; text-align: right; flex-shrink: 0; }
+
+.section-label { font-size: 12px; font-weight: 700; color: #2d3748; margin: 12px 0 6px; }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="top-nav">
+  <h1>🎻🎹 小提琴 & 钢琴完整学费指南 — Tampines 家庭版</h1>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('overview',this)">📋 总览</button>
+    <button class="nav-tab" onclick="showPage('nafa',this)">🏛️ NAFA 费用</button>
+    <button class="nav-tab" onclick="showPage('violin',this)">🎻 小提琴机构</button>
+    <button class="nav-tab" onclick="showPage('piano',this)">🎹 钢琴机构</button>
+    <button class="nav-tab" onclick="showPage('shops',this)">🛒 二手琴店</button>
+    <button class="nav-tab" onclick="showPage('strategy',this)">💡 省钱策略</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 1: OVERVIEW
+═══════════════════════════════════════════════════ -->
+<div id="page-overview" class="page active">
+  <p class="section-title">📋 费用总览</p>
+  <p class="section-sub">两个孩子同时学小提琴 + 钢琴｜NAFA 费率（2025年7月起，含9% GST）｜月费 = 学期费÷20节×4节</p>
+
+  <div class="formula-box">
+    <strong>📐 月费计算方式：学期费 ÷ 20节 × 4节/月</strong><br>
+    NAFA 每学期固定20节课，每周一节，月费以每月4节课计算。年费 = 学期费 × 2个学期。
+  </div>
+
+  <div class="summary-grid">
+    <div class="s-card hl span2">
+      <div><div class="s-label">两孩子全 NAFA（小提琴+钢琴）第1年</div><div class="s-value">$16,436/年</div></div>
+      <div style="text-align:right"><div class="s-label">月费（×4节）</div><div class="s-value">$3,287/月</div></div>
+    </div>
+    <div class="s-card"><div class="s-label">Sport 小提琴 Prep 1 月费</div><div class="s-value">$285/月</div><div class="s-sub">小组课，$71/节×4</div></div>
+    <div class="s-card"><div class="s-label">钢琴 Preparatory 月费</div><div class="s-value">$537/月</div><div class="s-sub">一对一，$134/节×4</div></div>
+    <div class="s-card"><div class="s-label">10年总学费（两孩子全NAFA）</div><div class="s-value">$328,804</div><div class="s-sub">小提琴+钢琴各一路走到Grade 8</div></div>
+    <div class="s-card"><div class="s-label">省钱方案（方案B）两孩年费</div><div class="s-value">~$10,800/年</div><div class="s-sub">NAFA小提琴+Yamaha钢琴</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>方案</th><th>小提琴</th><th>钢琴</th><th>单孩年费</th><th>两孩年费</th><th>两孩月费</th><th>适合谁</th></tr></thead>
+      <tbody>
+        <tr class="nafa-row"><td style="font-weight:700">A <span class="badge b-purple">全NAFA</span></td><td>NAFA</td><td>NAFA</td><td class="annual">$8,218</td><td class="annual">$16,436</td><td class="monthly">$3,287</td><td style="font-size:11px">走DSA，追求最高品质</td></tr>
+        <tr class="best"><td style="font-weight:700">B ⭐ <span class="badge b-green">推荐</span></td><td>NAFA</td><td>Yamaha Tampines（大一点）</td><td class="annual">~$5,400</td><td class="annual">~$10,800</td><td class="monthly">~$2,160</td><td style="font-size:11px">平衡品质与费用，最实际</td></tr>
+        <tr><td style="font-weight:700">C <span class="badge b-blue">省钱</span></td><td>NAFA</td><td>Cristofori（大一点）</td><td class="annual">~$4,300</td><td class="annual">~$8,600</td><td class="monthly">~$1,720</td><td style="font-size:11px">预算有限</td></tr>
+        <tr><td style="font-weight:700">D <span class="badge b-orange">最省</span></td><td>NAFA</td><td>私人老师（大一点）</td><td class="annual">~$4,200</td><td class="annual">~$8,400</td><td class="monthly">~$1,680</td><td style="font-size:11px">最省钱，需筛选老师</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="green-box">
+    <strong>🏆 核心建议（考虑通勤）</strong>
+    现在：Sport 继续 NAFA 小提琴 Prep 1B，这是最便宜的阶段（$285/月小组课）不要浪费。<br>
+    钢琴：先不急，等孩子大一点（有了小提琴乐理基础），直接从 Grade 2–3 开始在 <strong>Yamaha Tampines Mall</strong>（就在家门口！）学，跳过最贵的 Preparatory 阶段。<br>
+    升 Grade 1 前评估：若孩子热情高，留 NAFA；若只是兴趣性，可转 <strong>Mandeville @ Parkway Parade</strong>（车程约20分钟，口碑极好）。
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 2: NAFA FEES
+═══════════════════════════════════════════════════ -->
+<div id="page-nafa" class="page">
+  <p class="section-title">🏛️ NAFA 学费详细分析</p>
+  <p class="section-sub">来源：nafa.edu.sg（2025年7月起费率，含9% GST）｜80 Bencoolen Street</p>
+
+  <div class="subtabs">
+    <button class="subtab active" onclick="showSub('nafa','combined',this)">两孩合计</button>
+    <button class="subtab" onclick="showSub('nafa','sport',this)">Sport</button>
+    <button class="subtab" onclick="showSub('nafa','child2',this)">第二孩子</button>
+    <button class="subtab" onclick="showSub('nafa','violin_unit',this)">🎻 小提琴单价</button>
+    <button class="subtab" onclick="showSub('nafa','piano_unit',this)">🎹 钢琴单价</button>
+    <button class="subtab" onclick="showSub('nafa','chart',this)">📊 走势图</button>
+  </div>
+
+  <!-- Combined -->
+  <div id="nafa-combined" class="subcontent active">
+    <div class="table-wrap"><table>
+      <thead><tr><th>年份</th><th>Sport 小提琴</th><th>Sport 钢琴</th><th>孩子2 小提琴</th><th>孩子2 钢琴</th><th>年度合计</th><th>月费(×4节)</th></tr></thead>
+      <tbody>
+        <tr class="highlight"><td class="year">第1年</td><td><span class="badge b-yellow">Prep 1</span></td><td><span class="badge b-red">Piano Prep</span></td><td><span class="badge b-yellow">Prep 1</span></td><td><span class="badge b-red">Piano Prep</span></td><td class="total-col">$16,436</td><td class="monthly">$3,287</td></tr>
+        <tr><td class="year">第2年</td><td><span class="badge b-yellow">Prep 2</span></td><td><span class="badge b-purple">G1</span></td><td><span class="badge b-yellow">Prep 2</span></td><td><span class="badge b-purple">G1</span></td><td class="total-col">$17,696</td><td class="monthly">$3,539</td></tr>
+        <tr><td class="year">第3年</td><td><span class="badge b-purple">G1</span></td><td><span class="badge b-purple">G2</span></td><td><span class="badge b-purple">G1</span></td><td><span class="badge b-purple">G2</span></td><td class="total-col">$21,556</td><td class="monthly">$4,311</td></tr>
+        <tr><td class="year">第4年</td><td><span class="badge b-purple">G2</span></td><td><span class="badge b-purple">G3</span></td><td><span class="badge b-purple">G2</span></td><td><span class="badge b-purple">G3</span></td><td class="total-col">$23,312</td><td class="monthly">$4,662</td></tr>
+        <tr><td class="year">第5年</td><td><span class="badge b-purple">G3</span></td><td><span class="badge b-purple">G4</span></td><td><span class="badge b-purple">G3</span></td><td><span class="badge b-purple">G4</span></td><td class="total-col">$26,312</td><td class="monthly">$5,262</td></tr>
+        <tr><td class="year">第6年</td><td><span class="badge b-purple">G4</span></td><td><span class="badge b-purple">G5</span></td><td><span class="badge b-purple">G4</span></td><td><span class="badge b-purple">G5</span></td><td class="total-col">$26,312</td><td class="monthly">$5,262</td></tr>
+        <tr><td class="year">第7年</td><td><span class="badge b-purple">G5</span></td><td><span class="badge b-green">YMP G6</span></td><td><span class="badge b-purple">G5</span></td><td><span class="badge b-green">YMP G6</span></td><td class="total-col">$27,212</td><td class="monthly">$5,442</td></tr>
+        <tr><td class="year">第8年</td><td><span class="badge b-green">YMP G6</span></td><td><span class="badge b-green">YMP G7</span></td><td><span class="badge b-green">YMP G6</span></td><td><span class="badge b-green">YMP G7</span></td><td class="total-col">$27,676</td><td class="monthly">$5,535</td></tr>
+        <tr><td class="year">第9年</td><td><span class="badge b-green">YMP G7</span></td><td><span class="badge b-green">YMP G8</span></td><td><span class="badge b-green">YMP G7</span></td><td><span class="badge b-green">YMP G8</span></td><td class="total-col">$28,100</td><td class="monthly">$5,620</td></tr>
+        <tr><td class="year">第10年</td><td><span class="badge b-green">YMP G8</span></td><td><span class="badge b-green">YMP G8</span></td><td><span class="badge b-green">YMP G8</span></td><td><span class="badge b-green">YMP G8</span></td><td class="total-col">$28,332</td><td class="monthly">$5,666</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- Sport -->
+  <div id="nafa-sport" class="subcontent">
+    <div class="table-wrap"><table>
+      <thead><tr><th>年份</th><th>小提琴等级</th><th>小提琴年费</th><th>钢琴等级</th><th>钢琴年费</th><th>年度合计</th><th>月费(×4节)</th></tr></thead>
+      <tbody>
+        <tr class="highlight"><td class="year">第1年</td><td><span class="badge b-yellow">Prep 1</span></td><td>$2,846</td><td><span class="badge b-red">Preparatory</span></td><td>$5,372</td><td class="total-col">$8,218</td><td class="monthly">$1,644</td></tr>
+        <tr><td class="year">第2年</td><td><span class="badge b-yellow">Prep 2</span></td><td>$3,232</td><td><span class="badge b-purple">Grade 1</span></td><td>$5,458</td><td class="total-col">$8,690</td><td class="monthly">$1,738</td></tr>
+        <tr><td class="year">第3年</td><td><span class="badge b-purple">Grade 1</span></td><td>$5,820</td><td><span class="badge b-purple">Grade 2</span></td><td>$5,458</td><td class="total-col">$11,278</td><td class="monthly">$2,256</td></tr>
+        <tr><td class="year">第4年</td><td><span class="badge b-purple">Grade 2</span></td><td>$5,820</td><td><span class="badge b-purple">Grade 3</span></td><td>$6,442</td><td class="total-col">$12,262</td><td class="monthly">$2,452</td></tr>
+        <tr><td class="year">第5年</td><td><span class="badge b-purple">Grade 3</span></td><td>$6,870</td><td><span class="badge b-purple">Grade 4</span></td><td>$6,442</td><td class="total-col">$13,312</td><td class="monthly">$2,662</td></tr>
+        <tr><td class="year">第6年</td><td><span class="badge b-purple">Grade 4</span></td><td>$6,870</td><td><span class="badge b-purple">Grade 5</span></td><td>$6,442</td><td class="total-col">$13,312</td><td class="monthly">$2,662</td></tr>
+        <tr><td class="year">第7年</td><td><span class="badge b-purple">Grade 5</span></td><td>$6,870</td><td><span class="badge b-green">YMP G6</span></td><td>$6,742</td><td class="total-col">$13,612</td><td class="monthly">$2,722</td></tr>
+        <tr><td class="year">第8年</td><td><span class="badge b-green">YMP G6</span></td><td>$6,934</td><td><span class="badge b-green">YMP G7</span></td><td>$6,742</td><td class="total-col">$13,676</td><td class="monthly">$2,735</td></tr>
+        <tr><td class="year">第9年</td><td><span class="badge b-green">YMP G7</span></td><td>$6,934</td><td><span class="badge b-green">YMP G8</span></td><td>$6,976</td><td class="total-col">$13,910</td><td class="monthly">$2,782</td></tr>
+        <tr><td class="year">第10年</td><td><span class="badge b-green">YMP G8</span></td><td>$7,190</td><td><span class="badge b-green">YMP G8</span></td><td>$6,976</td><td class="total-col">$14,166</td><td class="monthly">$2,833</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-box"><strong>Sport 10年总学费：$124,434</strong>平均每年 $12,443，月费约 $2,489。</div>
+  </div>
+
+  <!-- Child 2 -->
+  <div id="nafa-child2" class="subcontent">
+    <div class="table-wrap"><table>
+      <thead><tr><th>年份</th><th>小提琴等级</th><th>小提琴年费</th><th>钢琴等级</th><th>钢琴年费</th><th>年度合计</th><th>月费(×4节)</th></tr></thead>
+      <tbody>
+        <tr class="highlight"><td class="year">第1年</td><td><span class="badge b-yellow">Prep 1</span></td><td>$2,846</td><td><span class="badge b-red">Preparatory</span></td><td>$5,372</td><td class="total-col">$8,218</td><td class="monthly">$1,644</td></tr>
+        <tr><td class="year">第2年</td><td><span class="badge b-yellow">Prep 2</span></td><td>$3,232</td><td><span class="badge b-purple">Grade 1</span></td><td>$5,458</td><td class="total-col">$8,690</td><td class="monthly">$1,738</td></tr>
+        <tr><td class="year">第3年</td><td><span class="badge b-purple">Grade 1</span></td><td>$5,820</td><td><span class="badge b-purple">Grade 2</span></td><td>$5,458</td><td class="total-col">$11,278</td><td class="monthly">$2,256</td></tr>
+        <tr><td class="year">第4年</td><td><span class="badge b-purple">Grade 2</span></td><td>$5,820</td><td><span class="badge b-purple">Grade 3</span></td><td>$6,442</td><td class="total-col">$12,262</td><td class="monthly">$2,452</td></tr>
+        <tr><td class="year">第5年</td><td><span class="badge b-purple">Grade 3</span></td><td>$6,870</td><td><span class="badge b-purple">Grade 4</span></td><td>$6,442</td><td class="total-col">$13,312</td><td class="monthly">$2,662</td></tr>
+        <tr><td class="year">第6年</td><td><span class="badge b-purple">Grade 4</span></td><td>$6,870</td><td><span class="badge b-purple">Grade 5</span></td><td>$6,442</td><td class="total-col">$13,312</td><td class="monthly">$2,662</td></tr>
+        <tr><td class="year">第7年</td><td><span class="badge b-purple">Grade 5</span></td><td>$6,870</td><td><span class="badge b-green">YMP G6</span></td><td>$6,742</td><td class="total-col">$13,612</td><td class="monthly">$2,722</td></tr>
+        <tr><td class="year">第8年</td><td><span class="badge b-green">YMP G6</span></td><td>$6,934</td><td><span class="badge b-green">YMP G7</span></td><td>$6,742</td><td class="total-col">$13,676</td><td class="monthly">$2,735</td></tr>
+        <tr><td class="year">第9年</td><td><span class="badge b-green">YMP G7</span></td><td>$6,934</td><td><span class="badge b-green">YMP G8</span></td><td>$6,976</td><td class="total-col">$13,910</td><td class="monthly">$2,782</td></tr>
+        <tr><td class="year">第10年</td><td><span class="badge b-green">YMP G8</span></td><td>$7,190</td><td><span class="badge b-green">YMP G8</span></td><td>$6,976</td><td class="total-col">$14,166</td><td class="monthly">$2,833</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-box"><strong>第二孩子 10年总学费：$124,434</strong>与 Sport 路径相同。</div>
+  </div>
+
+  <!-- Violin unit price -->
+  <div id="nafa-violin_unit" class="subcontent">
+    <div class="section-label">🎻 小提琴每节课单价（月费=实践课单价×4节）</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>等级</th><th>学期费</th><th>课型</th><th>实践课时长</th><th>实践单价</th><th>乐理单价</th><th>月费(×4节实践)</th><th>年费</th></tr></thead>
+      <tbody>
+        <tr class="highlight"><td><span class="badge b-yellow">Prep 1</span></td><td>$1,423</td><td><span class="badge b-yellow">小组课</span></td><td>60分钟</td><td class="unit">$71/节</td><td class="dim">无</td><td class="monthly">$285/月</td><td>$2,846</td></tr>
+        <tr><td><span class="badge b-yellow">Prep 2</span></td><td>$1,616</td><td><span class="badge b-yellow">小组课</span></td><td>60分钟</td><td class="unit">$81/节</td><td class="unit">$27/节</td><td class="monthly">$323/月</td><td>$3,232</td></tr>
+        <tr><td><span class="badge b-purple">Grade 1</span></td><td>$2,910</td><td><span class="badge b-orange">一对一</span></td><td>45分钟</td><td class="unit">$97/节</td><td class="unit">$49/节</td><td class="monthly">$582/月</td><td>$5,820</td></tr>
+        <tr><td><span class="badge b-purple">Grade 2</span></td><td>$2,910</td><td><span class="badge b-orange">一对一</span></td><td>45分钟</td><td class="unit">$97/节</td><td class="unit">$49/节</td><td class="monthly">$582/月</td><td>$5,820</td></tr>
+        <tr><td><span class="badge b-purple">Grade 3</span></td><td>$3,435</td><td><span class="badge b-orange">一对一</span></td><td>60分钟</td><td class="unit">$115/节</td><td class="unit">$57/节</td><td class="monthly">$687/月</td><td>$6,870</td></tr>
+        <tr><td><span class="badge b-purple">Grade 4–5</span></td><td>$3,435</td><td><span class="badge b-orange">一对一</span></td><td>60分钟</td><td class="unit">$115/节</td><td class="unit">$57/节</td><td class="monthly">$687/月</td><td>$6,870</td></tr>
+        <tr><td><span class="badge b-green">YMP G6–7</span></td><td>$3,467</td><td><span class="badge b-orange">一对一</span></td><td>60分钟</td><td class="unit">$116/节</td><td class="unit">$57/节</td><td class="monthly">$693/月</td><td>$6,934</td></tr>
+        <tr><td><span class="badge b-green">YMP G8</span></td><td>$3,595</td><td><span class="badge b-orange">一对一</span></td><td>60分钟</td><td class="unit">$120/节</td><td class="unit">$60/节</td><td class="monthly">$719/月</td><td>$7,190</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- Piano unit price -->
+  <div id="nafa-piano_unit" class="subcontent">
+    <div class="section-label">🎹 钢琴每节课单价（月费=实践课单价×4节）</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>等级</th><th>学期费</th><th>课型</th><th>实践课时长</th><th>实践单价</th><th>乐理单价</th><th>月费(×4节实践)</th><th>年费</th></tr></thead>
+      <tbody>
+        <tr class="highlight"><td><span class="badge b-red">Preparatory</span></td><td>$2,686</td><td><span class="badge b-orange">一对一</span></td><td>45分钟</td><td class="unit">$134/节</td><td class="unit">$45/节</td><td class="monthly">$537/月</td><td>$5,372</td></tr>
+        <tr><td><span class="badge b-purple">Grade 1–2</span></td><td>$2,729</td><td><span class="badge b-orange">一对一</span></td><td>45分钟</td><td class="unit">$136/节</td><td class="unit">$45/节</td><td class="monthly">$546/月</td><td>$5,458</td></tr>
+        <tr><td><span class="badge b-purple">Grade 3–5</span></td><td>$3,221</td><td><span class="badge b-orange">一对一</span></td><td>60分钟</td><td class="unit">$161/节</td><td class="unit">$54/节</td><td class="monthly">$644/月</td><td>$6,442</td></tr>
+        <tr><td><span class="badge b-green">YMP G6–7</span></td><td>$3,371</td><td><span class="badge b-orange">一对一</span></td><td>60分钟</td><td class="unit">$169/节</td><td class="unit">$56/节</td><td class="monthly">$674/月</td><td>$6,742</td></tr>
+        <tr><td><span class="badge b-green">YMP G8</span></td><td>$3,488</td><td><span class="badge b-orange">一对一</span></td><td>60分钟</td><td class="unit">$174/节</td><td class="unit">$58/节</td><td class="monthly">$698/月</td><td>$6,976</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-box"><strong>💡 钢琴从 Preparatory 起全程一对一，没有小组课阶段</strong>这是钢琴比小提琴 Prep 贵很多的原因。</div>
+  </div>
+
+  <!-- Chart -->
+  <div id="nafa-chart" class="subcontent">
+    <div class="chart-section">
+      <div class="chart-title">📊 两孩子合计 — 每年学费走势（全NAFA）</div>
+      <div id="nafa-bars"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 3: VIOLIN SCHOOLS
+═══════════════════════════════════════════════════ -->
+<div id="page-violin" class="page">
+  <p class="section-title">🎻 小提琴机构对比</p>
+  <p class="section-sub">2026年新加坡市场价格｜月费=每节单价×4节</p>
+
+  <div class="subtabs">
+    <button class="subtab active" onclick="showSub('violin','vtable',this)">📊 费用对比</button>
+    <button class="subtab" onclick="showSub('violin','vschools',this)">🏫 机构详情</button>
+    <button class="subtab" onclick="showSub('violin','vverdict',this)">⚖️ NAFA vs 外面</button>
+    <button class="subtab" onclick="showSub('violin','vcommute',this)">🚗 通勤距离</button>
+  </div>
+
+  <div id="violin-vtable" class="subcontent active">
+    <div class="table-wrap"><table>
+      <thead><tr><th>机构</th><th>地址</th><th>课时</th><th>课型</th><th>每节单价</th><th>月费(×4节)</th><th>含乐理？</th><th>年费</th><th>通过率</th></tr></thead>
+      <tbody>
+        <tr class="nafa-row"><td class="school">🏛️ NAFA Prep 1</td><td style="font-size:11px">Bencoolen St</td><td>60分钟</td><td><span class="badge b-yellow">小组</span></td><td class="price">$71</td><td class="price">$285</td><td><span class="badge b-red">❌</span></td><td class="annual">$2,846</td><td><span class="badge b-purple">内部考核</span></td></tr>
+        <tr class="nafa-row"><td class="school">🏛️ NAFA G1–2</td><td style="font-size:11px">Bencoolen St</td><td>45分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$97</td><td class="price">$582（含乐理）</td><td><span class="badge b-green">✅</span></td><td class="annual">$5,820</td><td><span class="badge b-purple">ABRSM G8</span></td></tr>
+        <tr class="nafa-row"><td class="school">🏛️ NAFA G3–5</td><td style="font-size:11px">Bencoolen St</td><td>60分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$115</td><td class="price">$687（含乐理）</td><td><span class="badge b-green">✅</span></td><td class="annual">$6,870</td><td><span class="badge b-purple">ABRSM G8</span></td></tr>
+        <tr class="best"><td class="school">🎵 Tanglewood</td><td style="font-size:11px">896 Dunearn Rd<br>Bukit Timah</td><td>30/45/60分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$68–$136</td><td class="price">$272–$544</td><td><span class="badge b-red">❌</span></td><td class="annual">$3,264–$6,528</td><td><span class="badge b-green">100% ABRSM</span></td></tr>
+        <tr class="best"><td class="school">🎼 Mandeville</td><td style="font-size:11px">United Square/<br>Parkway Parade</td><td>30–60分钟</td><td><span class="badge b-orange">一对一</span>+合奏</td><td class="price">~$80–$130</td><td class="price">~$320–$520</td><td><span class="badge b-orange">⚠️ CMC另计</span></td><td class="annual">~$3,840–$6,240</td><td><span class="badge b-green">100% ABRSM</span></td></tr>
+        <tr><td class="school">🎻 RAMP</td><td style="font-size:11px">9 Oxley Rise<br>Dhoby Ghaut</td><td>45–60分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">~$100–$150</td><td class="price">~$400–$600</td><td><span class="badge b-red">❌</span></td><td class="annual">~$4,800–$7,200</td><td><span class="badge b-green">DSA成功率高</span></td></tr>
+        <tr><td class="school">📚 LVL Music</td><td style="font-size:11px">17 Yuk Tong Ave<br>Beauty World MRT</td><td>30/45/60分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$75–$150</td><td class="price">$300–$600</td><td><span class="badge b-red">❌</span></td><td class="annual">$3,600–$7,200</td><td><span class="badge b-blue">ABRSM准备</span></td></tr>
+        <tr class="best"><td class="school">🎵 Yamaha<br>Tampines ✅</td><td style="font-size:11px">Tampines Mall<br>#05-04</td><td>45分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$53–$56</td><td class="price">$212–$224</td><td><span class="badge b-red">❌</span></td><td class="annual">$2,544–$2,688</td><td><span class="badge b-blue">ABRSM准备</span></td></tr>
+        <tr><td class="school">🎼 Cristofori</td><td style="font-size:11px">全岛30+分店<br>Bedok最近</td><td>30–45分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$40–$65</td><td class="price">$160–$260</td><td><span class="badge b-red">❌</span></td><td class="annual">$1,920–$3,120</td><td><span class="badge b-blue">ABRSM准备</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-box"><strong>⚠️ 外面学校需另加乐理课（约$80–$150/月）才是公平比较</strong>加乐理后，Yamaha 月费约 $312–$380，Mandeville 月费约 $400–$650。</div>
+  </div>
+
+  <div id="violin-vschools" class="subcontent">
+    <div class="school-card top">
+      <div class="sc-name">🥇 Tanglewood Music School <span class="badge b-red">弦乐专门</span></div>
+      <div class="sc-addr">📍 896 Dunearn Road, #03-14, S589472（KAP MRT，Bukit Timah）</div>
+      <div class="sc-tel">📞 6733 1730｜admin@tanglewoodmusicschool.com｜试课 $30</div>
+      <div class="sc-note">2000年创立，专注弦乐，所有老师持音乐文凭或研究生学位，100% ABRSM 通过率。有合奏团和小提琴 ensemble 机会，规模小，感觉私人化。费率：30分$68 / 45分$102 / 60分$136。</div>
+      <div class="sc-tags"><span class="badge b-green">100% ABRSM通过率</span><span class="badge b-blue">合奏团机会</span><span class="badge b-orange">车程约40分钟</span></div>
+    </div>
+    <div class="school-card top">
+      <div class="sc-name">🥇 Mandeville Conservatory <span class="badge b-red">SSO音乐家创办</span></div>
+      <div class="sc-addr">📍 101 Thomson Rd #03-21 United Square, S307591（6250 1911）<br>📍 或 80 Marine Parade Rd #11-05 Parkway Parade, S449269（6440 3383）⭐ 离Tampines较近</div>
+      <div class="sc-hours">🕘 United Square：周一至五 9am–9pm / 周六 8:30am–9pm / 周日 9am–8pm</div>
+      <div class="sc-note">由前新加坡交响乐团（SSO）音乐家创办，100% ABRSM 通过率。个人课+合奏课（CMC）综合课程，培养全面音乐家。Parkway Parade 分店距 Tampines 约20–25分钟，是外面学校里最值得考虑的选项。</div>
+      <div class="sc-tags"><span class="badge b-green">100% ABRSM通过率</span><span class="badge b-purple">SSO音乐家背景</span><span class="badge b-orange">Parkway Parade车程~20分钟</span></div>
+    </div>
+    <div class="school-card">
+      <div class="sc-name">🎻 RAMP Violin Academy</div>
+      <div class="sc-addr">📍 9 Oxley Rise, #02-01, S238697（Dhoby Ghaut MRT）</div>
+      <div class="sc-tel">📞 8699 8917｜rafflesarts.com</div>
+      <div class="sc-note">由小提琴家 Cindy Yan 创办，新加坡最专注的小提琴学院，DSA 申请成功率高，学生曾在 Esplanade 和 VCH 演出。适合认真走音乐路线的孩子，费用偏高，需直接询问。</div>
+      <div class="sc-tags"><span class="badge b-green">DSA成功率高</span><span class="badge b-purple">Esplanade演出机会</span><span class="badge b-red">费用较高</span></div>
+    </div>
+    <div class="school-card">
+      <div class="sc-name">📚 LVL Music Academy</div>
+      <div class="sc-addr">📍 17 Yuk Tong Ave, S596322（Beauty World MRT B出口）</div>
+      <div class="sc-tel">📞 WhatsApp: 8200 4711｜lvlmusicacademy.com</div>
+      <div class="sc-note">费用透明，G1–3每节45分$95，G4–5 $105，G6–8 $115。所有老师经统一课程培训，不怕换老师。同时提供乐器租借和购买。</div>
+      <div class="sc-tags"><span class="badge b-green">费用透明公开</span><span class="badge b-blue">统一课程不怕换老师</span></div>
+    </div>
+    <div class="school-card near">
+      <div class="sc-name">🎵 Yamaha @ Tampines Mall <span class="badge b-green">📍 离家最近</span></div>
+      <div class="sc-addr">📍 4 Tampines Central 5, #05-04 Tampines Mall, S529510</div>
+      <div class="sc-tel">📞 67409877</div>
+      <div class="sc-note">最方便，步行可达，无需通勤。月费 $212–$224（45分钟一对一），是所有机构中最低的。适合预算有限或孩子刚入门还不确定是否长期学的家庭。需另加乐理课。</div>
+      <div class="sc-tags"><span class="badge b-green">离家最近，步行可达</span><span class="badge b-blue">价格最低</span><span class="badge b-red">需另加乐理</span></div>
+    </div>
+  </div>
+
+  <div id="violin-vverdict" class="subcontent">
+    <div class="verdict-grid">
+      <div class="verdict-card win">
+        <div class="verdict-title">✅ 选 NAFA 的理由</div>
+        <div class="verdict-item v-pro">课程最系统，实践+乐理一站式</div>
+        <div class="verdict-item v-pro">老师资历顶尖</div>
+        <div class="verdict-item v-pro">Prep 1 小组课，$285/月超实惠</div>
+        <div class="verdict-item v-pro">有Masterclass表演机会</div>
+        <div class="verdict-item v-pro">直通 ABRSM G8 完整路径</div>
+        <div class="verdict-item v-pro">DSA 最有说服力</div>
+        <div class="verdict-item v-pro">孩子已在读，无需重新适应</div>
+      </div>
+      <div class="verdict-card lose">
+        <div class="verdict-title">❌ NAFA 的缺点</div>
+        <div class="verdict-item v-con">Bencoolen，从Tampines来回约1.5小时</div>
+        <div class="verdict-item v-con">升Grade 1后费用跳至 $582/月</div>
+        <div class="verdict-item v-con">须通过Audition，$32.70/次</div>
+        <div class="verdict-item v-con">按学期收费，一次付清压力大</div>
+        <div class="verdict-item v-con">只有周末上课，灵活性低</div>
+      </div>
+    </div>
+    <div class="green-box">
+      <strong>🏆 建议：现在继续 NAFA，升 Grade 1 前再评估</strong>
+      Sport 的 Prep 1B 是最便宜的阶段，读完这学期是对的。升 Grade 1 前做一次评估：若热情高，留 NAFA 系统最好；若只是兴趣性学习，转 <strong>Mandeville @ Parkway Parade</strong>（100%通过率，车程约20分钟）是外面最值得的选择。最不推荐中途随意换学校。
+    </div>
+  </div>
+
+  <div id="violin-vcommute" class="subcontent">
+    <div class="table-wrap"><table>
+      <thead><tr><th>机构</th><th>地址</th><th>驾车</th><th>公共交通</th><th>来回时间</th><th>方便程度</th></tr></thead>
+      <tbody>
+        <tr class="best"><td class="school">Yamaha Tampines</td><td style="font-size:11px">Tampines Central 5</td><td>~5分钟</td><td>步行可达</td><td class="price">~10分钟</td><td><span class="badge b-green">⭐⭐⭐⭐⭐</span></td></tr>
+        <tr class="best"><td class="school">Mandeville<br>Parkway Parade</td><td style="font-size:11px">Marine Parade Rd</td><td>~20–25分钟</td><td>巴士约35分钟</td><td class="price">~50分钟</td><td><span class="badge b-green">⭐⭐⭐⭐</span></td></tr>
+        <tr><td class="school">NAFA</td><td style="font-size:11px">80 Bencoolen St</td><td>~30–40分钟</td><td>MRT约45分钟</td><td class="price">~1.5小时</td><td><span class="badge b-orange">⭐⭐⭐</span></td></tr>
+        <tr><td class="school">Mandeville United Sq</td><td style="font-size:11px">101 Thomson Rd</td><td>~30–35分钟</td><td>MRT约50分钟</td><td class="price">~1.1小时</td><td><span class="badge b-orange">⭐⭐⭐</span></td></tr>
+        <tr><td class="school">LVL / Tanglewood</td><td style="font-size:11px">Bukit Timah</td><td>~35–45分钟</td><td>MRT约55分钟</td><td class="price">~1.5小时</td><td><span class="badge b-red">⭐⭐</span></td></tr>
+        <tr><td class="school">RAMP</td><td style="font-size:11px">Oxley Rise</td><td>~30–40分钟</td><td>MRT约50分钟</td><td class="price">~1.5小时</td><td><span class="badge b-red">⭐⭐</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-box"><strong>💡 通勤隐性成本</strong>NAFA 每次来回约1.5小时，一年40周课约60小时交通时间。两孩可同时上课，来回一趟搞定，还可接受。</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 4: PIANO SCHOOLS
+═══════════════════════════════════════════════════ -->
+<div id="page-piano" class="page">
+  <p class="section-title">🎹 钢琴机构对比</p>
+  <p class="section-sub">2026年新加坡市场价格｜月费=每节单价×4节｜NAFA 月费=学期费÷20×4</p>
+
+  <div class="subtabs">
+    <button class="subtab active" onclick="showSub('piano','ptable',this)">📊 费用对比</button>
+    <button class="subtab" onclick="showSub('piano','pwiththeory',this)">📋 含乐理真实费用</button>
+    <button class="subtab" onclick="showSub('piano','pstrategy',this)">💡 钢琴学习策略</button>
+  </div>
+
+  <div id="piano-ptable" class="subcontent active">
+    <div class="table-wrap"><table>
+      <thead><tr><th>机构</th><th>地址</th><th>课时</th><th>课型</th><th>月费(×4节)</th><th>年费</th><th>含乐理？</th><th>考级</th></tr></thead>
+      <tbody>
+        <tr class="nafa-row"><td class="school">🏛️ NAFA Prep</td><td style="font-size:11px">Bencoolen St</td><td>45分钟实践<br>+45分钟乐理</td><td><span class="badge b-orange">一对一</span></td><td class="price">$537（含乐理）</td><td class="annual">$5,372</td><td><span class="badge b-green">✅</span></td><td><span class="badge b-purple">ABRSM</span></td></tr>
+        <tr class="nafa-row"><td class="school">🏛️ NAFA G3–5</td><td style="font-size:11px">Bencoolen St</td><td>60分钟实践<br>+60分钟乐理</td><td><span class="badge b-orange">一对一</span></td><td class="price">$644（含乐理）</td><td class="annual">$6,442</td><td><span class="badge b-green">✅</span></td><td><span class="badge b-purple">ABRSM</span></td></tr>
+        <tr class="best"><td class="school">🍓 Huckleberry<br>⭐ 口碑最好</td><td style="font-size:11px">Sengkang/<br>Hougang/YCK</td><td>45分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">~$404（含基础乐理）</td><td class="annual">~$4,848</td><td><span class="badge b-green">✅ 基础乐理</span></td><td><span class="badge b-green">100% ABRSM</span></td></tr>
+        <tr class="best"><td class="school">🎵 Yamaha<br>Tampines ✅</td><td style="font-size:11px">Tampines Mall<br>#05-04</td><td>45分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$212–$224（不含乐理）</td><td class="annual">$2,544–$2,688</td><td><span class="badge b-red">❌</span></td><td><span class="badge b-blue">ABRSM/Yamaha</span></td></tr>
+        <tr><td class="school">🎹 Kawai</td><td style="font-size:11px">Parkway Parade等<br>4个分店</td><td>30–45分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$180–$280</td><td class="annual">$2,160–$3,360</td><td><span class="badge b-red">❌</span></td><td><span class="badge b-blue">ABRSM/Trinity</span></td></tr>
+        <tr><td class="school">🎼 Cristofori</td><td style="font-size:11px">全岛30+分店<br>Bedok最近</td><td>30–45分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$160–$260</td><td class="annual">$1,920–$3,120</td><td><span class="badge b-orange">⚠️ 部分含</span></td><td><span class="badge b-blue">ABRSM/Trinity</span></td></tr>
+        <tr><td class="school">🎻 Tanglewood</td><td style="font-size:11px">896 Dunearn Rd<br>Bukit Timah</td><td>30–60分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$272–$544</td><td class="annual">$3,264–$6,528</td><td><span class="badge b-red">❌</span></td><td><span class="badge b-green">100% ABRSM</span></td></tr>
+        <tr><td class="school">👩‍🏫 私人老师</td><td style="font-size:11px">上门/到老师处</td><td>45–60分钟</td><td><span class="badge b-orange">一对一</span></td><td class="price">$160–$360</td><td class="annual">$1,920–$4,320</td><td><span class="badge b-red">❌</span></td><td><span class="badge b-gray">视老师</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-box"><strong>⚠️ 比较时要苹果对苹果：NAFA 已含乐理，外面学校需另加</strong>加乐理后 Yamaha 月费约 $312–$380，Huckleberry 约 $404（已含）。</div>
+  </div>
+
+  <div id="piano-pwiththeory" class="subcontent">
+    <div class="table-wrap"><table>
+      <thead><tr><th>机构</th><th>实践月费(×4)</th><th>+乐理月费(×4)</th><th>合计月费</th><th>合计年费</th><th>vs NAFA Prep 省多少</th></tr></thead>
+      <tbody>
+        <tr class="nafa-row"><td class="school">🏛️ NAFA Prep</td><td>$134×4=$536</td><td>$45×4=$180（含）</td><td class="price">$537/月</td><td class="annual">$5,372/年</td><td class="dim">基准</td></tr>
+        <tr class="nafa-row"><td class="school">🏛️ NAFA G3–5</td><td>$161×4=$644</td><td>$54×4=$216（含）</td><td class="price">$644/月</td><td class="annual">$6,442/年</td><td class="dim">基准</td></tr>
+        <tr class="best"><td class="school">🍓 Huckleberry（含乐理）</td><td colspan="2">$444/11节，含基础乐理</td><td class="price">~$404/月</td><td class="annual">~$4,848/年</td><td class="saving">省约$524/年</td></tr>
+        <tr class="best"><td class="school">🎵 Yamaha+乐理</td><td>$53×4=$212</td><td>+$25–$40×4=$100–$160</td><td class="price">$312–$372/月</td><td class="annual">$3,744–$4,464/年</td><td class="saving">省约$908–$1,628/年</td></tr>
+        <tr><td class="school">🎹 Kawai+乐理</td><td>$45–$70×4</td><td>+$20–$33×4</td><td class="price">$260–$412/月</td><td class="annual">$3,120–$4,944/年</td><td class="saving">省约$428–$2,252/年</td></tr>
+        <tr><td class="school">🎼 Cristofori+乐理</td><td>$40–$65×4</td><td>+$20–$30×4</td><td class="price">$240–$380/月</td><td class="annual">$2,880–$4,560/年</td><td class="saving">省约$812–$2,492/年</td></tr>
+        <tr><td class="school">👩‍🏫 私人+乐理</td><td>$50–$90×4</td><td>+$15–$30×4</td><td class="price">$260–$480/月</td><td class="annual">$3,120–$5,760/年</td><td class="saving">省约$0–$2,252/年</td></tr>
+      </tbody>
+    </table></div>
+    <div class="info-box"><strong>📌 结论：Yamaha Tampines 加乐理是最优的性价比方案</strong>年费约 $3,744–$4,464，比 NAFA 便宜约 $900–$1,600/年，而且就在家门口。</div>
+  </div>
+
+  <div id="piano-pstrategy" class="subcontent">
+    <div class="green-box">
+      <strong>💡 关于钢琴——现在不急，等有小提琴基础再学</strong>
+      孩子在 NAFA 学小提琴后，乐理、读谱、听音已经有基础。大一点（7–8岁）直接从钢琴 Grade 2–3 开始学，完全跳过最贵的 Preparatory 阶段（原本 $5,372/年）。在 Yamaha Tampines 学，就在家门口，月费 $212–$224，是最省钱最方便的选择。
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>学钢琴时机</th><th>起始级别</th><th>跳过费用</th><th>推荐地点</th><th>月费</th></tr></thead>
+      <tbody>
+        <tr><td>现在立刻开始</td><td>NAFA Piano Prep</td><td>无</td><td>NAFA</td><td class="price">$537/月</td></tr>
+        <tr class="best"><td>⭐ 等有小提琴乐理基础（约1–2年后）</td><td>Grade 2–3 直接开始</td><td>省 $5,372–$10,744</td><td>Yamaha Tampines</td><td class="price">$212–$224/月</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note-box"><strong>⚠️ ABRSM Grade 6+ 须先通过 Grade 5 乐理</strong>小提琴的乐理证书可直接用于钢琴，不需要重新考，对两门乐器都有效！</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 5: SECOND HAND PIANO SHOPS
+═══════════════════════════════════════════════════ -->
+<div id="page-shops" class="page">
+  <p class="section-title">🛒 新加坡靠谱二手钢琴店</p>
+  <p class="section-sub">全部为实体店，有专业技术人员检查，比私人买卖安全可靠</p>
+
+  <div class="info-box"><strong>💡 给 Tampines 家庭的提示</strong>Cristofori Bedok 距 Tampines 约10分钟车程，是最近的选择。其他店在市区或西部，建议先电话预约再去。初学者买 Yamaha U1 或 Kawai K2 已经足够，无需买太贵。</div>
+
+  <div class="school-card top near">
+    <div class="sc-name">🥇 Cristofori Piano Megastore @ Bedok <span class="badge b-green">离Tampines最近</span><span class="badge b-red">首推</span></div>
+    <div class="sc-addr">📍 Blk 3014 Bedok Industrial Park E, #02-2150, S489980<br>（沿Upper Changi Road，Simei MRT约650米）</div>
+    <div class="sc-tel">📞 6243 9555 / 8766 0618</div>
+    <div class="sc-hours">🕘 周一至五 9am–5:30pm｜周六 9am–6pm｜周日 10am–6pm</div>
+    <div class="sc-note">新加坡最大钢琴品牌，每台二手琴经专业技术团队全面检查，提供5年保值回收保证。新琴+翻新琴+日本进口琴，种类最全。也卖小提琴。</div>
+    <div class="sc-tags"><span class="badge b-green">全面检查保证</span><span class="badge b-blue">5年回收保值</span><span class="badge b-orange">Yamaha/Kawai/欧洲品牌</span></div>
+  </div>
+  <div class="school-card">
+    <div class="sc-name">Cristofori Piano Megastore @ Shenton</div>
+    <div class="sc-addr">📍 7 Shenton Way, #02-01 Singapore Conference Hall, S068810</div>
+    <div class="sc-tel">📞 6951 0638｜WhatsApp：9650 3036</div>
+    <div class="sc-hours">🕘 周二至五 12pm–9pm｜周六至日 9am–7pm｜周一休息</div>
+    <div class="sc-tags"><span class="badge b-green">市区方便</span><span class="badge b-blue">Tanjong Pagar MRT步行可达</span></div>
+  </div>
+  <div class="school-card">
+    <div class="sc-name">Singapore Piano Shop</div>
+    <div class="sc-addr">📍 171 Stirling Road, #01-1103, S140171（Queenstown一带）</div>
+    <div class="sc-tel">📞 8100 2896｜pianoshop.sg</div>
+    <div class="sc-note">专门 Yamaha 和 Kawai 二手琴，价格实惠，也提供调音、维修、搬运、租琴服务。</div>
+    <div class="sc-tags"><span class="badge b-green">价格实惠</span><span class="badge b-orange">Yamaha/Kawai专门</span><span class="badge b-blue">租琴服务</span></div>
+  </div>
+  <div class="school-card top">
+    <div class="sc-name">🥇 Music Lodge <span class="badge b-red">口碑最好</span></div>
+    <div class="sc-addr">📍 2019 Bukit Batok Street 23, #02-252, S659524</div>
+    <div class="sc-tel">📞 6762 6378｜WhatsApp：9025 6792｜kc@musiclodge.sg</div>
+    <div class="sc-hours">🕘 请先预约</div>
+    <div class="sc-note">1994年创立，老板 KC 本身是30年经验调音师和技师。购买附送免费搬运、一次免费调音、1年保修和琴凳。口碑完全靠口耳相传建立，非常值得信赖。</div>
+    <div class="sc-tags"><span class="badge b-green">免费送货+调音</span><span class="badge b-blue">1年保修+琴凳</span><span class="badge b-orange">Steinway/Yamaha/Kawai</span></div>
+  </div>
+  <div class="school-card">
+    <div class="sc-name">Asia Piano</div>
+    <div class="sc-addr">📍 31 Playfair Road, #04-01 Golden Season Building, S367993（Tai Seng MRT步行3分钟）</div>
+    <div class="sc-note">老板曾是 Yamaha 原厂技师，在日本受训。强调买家教育，会详细解释如何选琴，适合不懂钢琴的家长。</div>
+    <div class="sc-tags"><span class="badge b-green">前Yamaha原厂技师</span><span class="badge b-blue">买家教育服务</span></div>
+  </div>
+  <div class="school-card">
+    <div class="sc-name">Zadok Music Shoppe</div>
+    <div class="sc-addr">📍 1 Tannery Road, #05-05 One Tannery, S347719</div>
+    <div class="sc-tel">📞 9276 6994｜zadokpiano.com.sg</div>
+    <div class="sc-hours">🕘 每天 2pm–6pm（⚠️ 必须提前预约）</div>
+    <div class="sc-note">专门从日本直接进口 Yamaha 和 Kawai 翻新琴，每台都有清楚的型号、出厂年份和价格，透明度很高。</div>
+    <div class="sc-tags"><span class="badge b-green">日本直接进口</span><span class="badge b-blue">价格透明</span><span class="badge b-red">须预约</span></div>
+  </div>
+
+  <div class="note-box">
+    <strong>💰 二手钢琴价格参考</strong>
+    入门翻新立式（Yamaha U1 / Kawai K2）：约 $1,500–$2,500<br>
+    中档翻新（Yamaha U3）：约 $2,500–$4,500<br>
+    高档（Yamaha U5 / Kawai K5）：约 $4,500–$8,000<br>
+    初学小朋友，Yamaha U1 或 Kawai K2 已经非常足够。
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE 6: STRATEGY
+═══════════════════════════════════════════════════ -->
+<div id="page-strategy" class="page">
+  <p class="section-title">💡 省钱策略 & 综合建议</p>
+  <p class="section-sub">针对 Tampines 家庭，两个孩子，综合考虑费用、通勤和教学质量</p>
+
+  <div class="green-box">
+    <strong>🏆 最推荐方案 B：NAFA 小提琴 + Yamaha Tampines 钢琴（大一点再学）</strong>
+    ① 现在：Sport 继续 NAFA 小提琴 Prep 1B（$285/月小组课，物超所值，读完这学期）<br>
+    ② 钢琴：先不学，等孩子有了小提琴乐理基础（约1–2年后），直接从 Grade 2–3 在 <strong>Yamaha Tampines Mall</strong> 开始<br>
+    ③ 省下钢琴 Preparatory 整个阶段（原本 $5,372/年）<br>
+    ④ Yamaha Tampines 月费 $212–$224，就在家门口，零通勤时间
+  </div>
+
+  <div class="summary-grid">
+    <div class="s-card hl span2">
+      <div><div class="s-label">方案B 两孩年费（小提琴NAFA + 钢琴Yamaha）</div><div class="s-value">~$10,800/年</div></div>
+      <div style="text-align:right"><div class="s-label">vs 全NAFA 省</div><div class="s-value">~$5,636/年</div></div>
+    </div>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>时间线</th><th>Sport</th><th>第二孩子</th><th>估算月费</th><th>重点行动</th></tr></thead>
+    <tbody>
+      <tr class="highlight"><td style="font-weight:700">现在</td><td>NAFA 小提琴 Prep 1B</td><td>尚未开始</td><td class="monthly">$285/月</td><td style="font-size:11px">把这学期读完，建立基础</td></tr>
+      <tr><td style="font-weight:700">6–12个月后</td><td>NAFA 小提琴 Prep 2</td><td>考虑加入 NAFA 小提琴 Prep 1</td><td class="monthly">~$608/月</td><td style="font-size:11px">评估第二孩子的音乐兴趣</td></tr>
+      <tr class="best"><td style="font-weight:700">1–2年后</td><td>NAFA 小提琴 Grade 1 或<br>考虑转 Mandeville</td><td>NAFA 小提琴 Prep 2</td><td class="monthly">~$905/月</td><td style="font-size:11px">⚠️ 升Grade 1前做大评估：留NAFA还是转Mandeville？</td></tr>
+      <tr><td style="font-weight:700">大一点（7–8岁）</td><td>加入 Yamaha 钢琴 Grade 2–3</td><td>加入 Yamaha 钢琴 Grade 1–2</td><td class="monthly">~$1,300/月</td><td style="font-size:11px">跳过Prep，直接从有基础的级别开始</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>方案</th><th>小提琴</th><th>钢琴</th><th>两孩年费</th><th>月费</th><th>适合</th></tr></thead>
+    <tbody>
+      <tr class="nafa-row"><td><span class="badge b-purple">A 全NAFA</span></td><td>NAFA</td><td>NAFA</td><td class="annual">$16,436</td><td class="monthly">$3,287</td><td style="font-size:11px">走DSA，最高品质</td></tr>
+      <tr class="best"><td><span class="badge b-green">B ⭐推荐</span></td><td>NAFA</td><td>Yamaha Tampines（大一点）</td><td class="annual">~$10,800</td><td class="monthly">~$2,160</td><td style="font-size:11px">平衡品质费用，最实际</td></tr>
+      <tr><td><span class="badge b-blue">C 省钱</span></td><td>NAFA</td><td>Cristofori（大一点）</td><td class="annual">~$8,600</td><td class="monthly">~$1,720</td><td style="font-size:11px">预算有限</td></tr>
+      <tr><td><span class="badge b-orange">D 最省</span></td><td>NAFA</td><td>私人老师（大一点）</td><td class="annual">~$8,400</td><td class="monthly">~$1,680</td><td style="font-size:11px">最省，需筛选老师</td></tr>
+      <tr><td><span class="badge b-gray">E 转出NAFA</span></td><td>Mandeville Parkway</td><td>Yamaha Tampines</td><td class="annual">~$9,600</td><td class="monthly">~$1,920</td><td style="font-size:11px">通勤更方便，口碑同样好</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note-box">
+    <strong>⚠️ 关于两个孩子同时学的时间压力</strong>
+    每门课每周需上2次（实践+乐理），两门课就是每周4个时段，加上每天练琴约1小时，周末还要去学校上课。对小朋友来说时间压力非常大，建议先专注一门，学好再加第二门。快乐地学一门，远比痛苦地学两门有意义。
+  </div>
+</div>
+
+<script>
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(e => e.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function showSub(page, name, el) {
+  const prefix = page + '-';
+  document.querySelectorAll('[id^="' + prefix + '"]').forEach(e => {
+    if (e.classList.contains('subcontent')) e.classList.remove('active');
+  });
+  el.closest('.page, .subcontent-wrapper') || document.getElementById('page-' + page);
+  const sibs = el.parentElement.querySelectorAll('.subtab');
+  sibs.forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(prefix + name).classList.add('active');
+}
+
+// Draw bar chart
+const barData = [
+  { year: '第1年', amount: 16436 },
+  { year: '第2年', amount: 17696 },
+  { year: '第3年', amount: 21556 },
+  { year: '第4年', amount: 23312 },
+  { year: '第5年', amount: 26312 },
+  { year: '第6年', amount: 26312 },
+  { year: '第7年', amount: 27212 },
+  { year: '第8年', amount: 27676 },
+  { year: '第9年', amount: 28100 },
+  { year: '第10年', amount: 28332 },
+];
+const barColors = ['#3182ce','#4299e1','#63b3ed','#2b6cb0','#2c5282','#1a365d','#2a4365','#1e3a5f','#153e75','#0f2d5e'];
+const maxAmt = Math.max(...barData.map(d => d.amount));
+const container = document.getElementById('nafa-bars');
+barData.forEach((d, i) => {
+  const pct = (d.amount / maxAmt * 100).toFixed(1);
+  const monthly = Math.round(d.amount / 20 * 4).toLocaleString();
+  container.innerHTML += `
+    <div class="bar-row">
+      <div class="bar-label">${d.year}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${barColors[i]}">${pct > 25 ? '$' + d.amount.toLocaleString() : ''}</div></div>
+      <div class="bar-amount">$${monthly}/月</div>
+    </div>`;
+});
+</script>
+</body>
+</html>
