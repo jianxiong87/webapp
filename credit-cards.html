@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信用卡管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    padding: 20px 24px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.5px; padding-bottom: 16px; }
+
+  .tabs { display: flex; gap: 4px; }
+
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active { background: #f0f2f5; color: #1a1a2e; font-weight: 600; }
+  .tab-btn:not(.active):hover { background: rgba(255,255,255,0.1); color: white; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── HOLDER SECTIONS ── */
+  .holder-section { margin-bottom: 32px; }
+
+  .holder-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .holder-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800; color: white;
+  }
+
+  .avatar-xj { background: linear-gradient(135deg, #4338ca, #6366f1); }
+  .avatar-jx { background: linear-gradient(135deg, #be185d, #ec4899); }
+
+  .holder-name { font-size: 20px; font-weight: 700; }
+
+  /* ── BANK GROUP IN TIMELINE ── */
+  .tl-bank-group { margin-bottom: 20px; }
+
+  .tl-bank-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  .tl-bank-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tl-cards { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── TIMELINE CARD ── */
+  .tl-card {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border-left: 4px solid var(--bc);
+  }
+
+  .tl-card-info { flex: 1; }
+
+  .tl-card-name { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+
+  .tl-dates { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .date-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+  }
+
+  .pill-green { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+  .pill-red   { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+  .pill-blue  { background: #eff6ff; color: #2563eb; border: 1px solid #93c5fd; }
+  .pill-gray  { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+
+  .pill-sub { font-size: 10px; font-weight: 400; opacity: 0.8; }
+
+  /* ── CURRENT CARDS ── */
+  .bank-section { margin-bottom: 28px; }
+
+  .bank-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .bank-logo {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: white; flex-shrink: 0;
+  }
+
+  .bank-name { font-size: 17px; font-weight: 700; }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-left: 4px solid var(--bank-color);
+  }
+
+  .card-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .card-name { font-size: 15px; font-weight: 700; line-height: 1.3; }
+  .card-meta { font-size: 12px; color: #6b7280; margin-top: 3px; }
+
+  .holder-chip {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  }
+
+  .chip-xj { background: #e0e7ff; color: #4338ca; }
+  .chip-jx { background: #fce7f3; color: #be185d; }
+
+  .rate-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+
+  .rate-pct { font-size: 22px; font-weight: 800; line-height: 1; }
+  .rate-label { font-size: 13px; color: #374151; line-height: 1.3; }
+
+  .features { margin: 6px 0; }
+
+  .feature-tag {
+    display: inline-block; background: #f3f4f6; color: #374151;
+    font-size: 11px; padding: 3px 8px; border-radius: 6px; margin: 2px 3px 2px 0;
+  }
+
+  .divider { border: none; border-top: 1px solid #f3f4f6; margin: 8px 0; }
+
+  .sub-rate {
+    font-size: 12px; color: #6b7280;
+    display: flex; justify-content: space-between; padding: 2px 0;
+  }
+
+  .sub-rate strong { color: #374151; font-weight: 600; }
+
+  .cap-note {
+    font-size: 11px; color: #6b7280;
+    background: #f9fafb; border-radius: 6px;
+    padding: 6px 8px; margin-top: 6px; line-height: 1.5;
+  }
+
+  .extra-note {
+    font-size: 11px; background: #fffbeb;
+    border-left: 3px solid #fbbf24;
+    border-radius: 4px; padding: 6px 8px; margin-top: 6px; line-height: 1.5;
+    color: #78350f;
+  }
+
+  @media (max-width: 600px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+
+  .login-overlay {
+    position: fixed; inset: 0; background: #f0f2f5; z-index: 1000;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .login-box { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center; }
+  .login-input {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #d1d5db;
+    font-size: 15px; margin-bottom: 10px; font-family: inherit;
+  }
+  .login-btn {
+    width: 100%; padding: 12px; border-radius: 10px; border: none;
+    background: #1a1a2e; color: white; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .login-error { color: #dc2626; font-size: 13px; margin-bottom: 10px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💳 信用卡管理</h1>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('timeline')">📅 开卡 / 关卡</button>
+    <button class="tab-btn" onclick="switchTab('cards')">💳 现有信用卡</button>
+  </div>
+</header>
+
+<div class="container">
+  <div id="tab-timeline" class="tab-panel active"></div>
+  <div id="tab-cards" class="tab-panel"></div>
+</div>
+
+<script>
+const TODAY = new Date();
+
+function parseDate(str) { return str ? new Date(str) : null; }
+
+function formatDate(str, approx) {
+  if (!str) return '日期不详';
+  const d = parseDate(str);
+  const base = d.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day: approx ? undefined : 'numeric' });
+  return approx ? base.replace('undefined日','') : base;
+}
+
+function reachedOneYear(dateStr) {
+  if (!dateStr) return null;
+  const d = parseDate(dateStr);
+  const oneYearLater = new Date(d);
+  oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+  return TODAY >= oneYearLater;
+}
+
+function daysToOneYear(dateStr) {
+  const d = parseDate(dateStr);
+  const oneYearLater = new Date(d);
+  oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+  return Math.ceil((oneYearLater - TODAY) / (1000*60*60*24));
+}
+
+function datePill(label, dateStr, approx) {
+  if (!dateStr) return `<span class="date-pill pill-gray">${label} 日期不详</span>`;
+  const reached = reachedOneYear(dateStr);
+  if (reached === null) return `<span class="date-pill pill-gray">${label} ${formatDate(dateStr, approx)}</span>`;
+  if (reached) {
+    return `<span class="date-pill pill-green">✅ ${label} ${formatDate(dateStr, approx)}</span>`;
+  } else {
+    const d = daysToOneYear(dateStr);
+    return `<span class="date-pill pill-red">🔴 ${label} ${formatDate(dateStr, approx)} <span class="pill-sub">（还差${d}天满1年）</span></span>`;
+  }
+}
+
+// ─────────────────────────────────────────
+// DATA  (by bank → by holder) — populated from Supabase after login, see bootWithAuth()
+// ─────────────────────────────────────────
+let timelineData = [];
+
+// ─────────────────────────────────────────
+// RENDER TIMELINE  (bank → holder)
+// ─────────────────────────────────────────
+function renderTimeline() {
+  const panel = document.getElementById('tab-timeline');
+
+  panel.innerHTML = timelineData.map(bankGroup => {
+    const holdersHtml = bankGroup.holders.map(h => {
+      const chipClass = h.holder === 'XJ' ? 'chip-xj' : 'chip-jx';
+
+      const cardsHtml = h.cards.map(card => {
+        const pills = [];
+        if (card.openDate) pills.push(datePill('开卡', card.openDate, card.openApprox));
+        if (card.closeDate) pills.push(datePill('关卡', card.closeDate, false));
+        if (!card.openDate && !card.closeDate) pills.push(`<span class="date-pill pill-gray">日期不详</span>`);
+        const noteHtml = card.note ? `<div style="font-size:11px;color:#9ca3af;margin-top:4px">${card.note}</div>` : '';
+
+        return `
+          <div class="tl-card" style="--bc:${bankGroup.color}">
+            <div class="tl-card-info">
+              <div class="tl-card-name">
+                <span class="holder-chip ${chipClass}">${h.holder}</span>
+                ${card.name}
+              </div>
+              <div class="tl-dates">${pills.join('')}</div>
+              ${noteHtml}
+            </div>
+          </div>`;
+      }).join('');
+
+      return cardsHtml;
+    }).join('');
+
+    return `
+      <div class="bank-section">
+        <div class="bank-header">
+          <div class="bank-logo" style="background:${bankGroup.color}">${bankGroup.bank[0]}</div>
+          <div class="bank-name">${bankGroup.bank}</div>
+        </div>
+        <div class="tl-cards">${holdersHtml}</div>
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────
+// CURRENT CARDS DATA — populated from Supabase after login, see bootWithAuth()
+// ─────────────────────────────────────────
+let banks = [];
+
+// ─────────────────────────────────────────
+// RENDER CURRENT CARDS
+// ─────────────────────────────────────────
+function renderCards() {
+  const panel = document.getElementById('tab-cards');
+  panel.innerHTML = banks.map(bank => {
+    const cardsHtml = bank.cards.map(card => {
+      const dateHtml = card.applyDate
+        ? `<div class="card-meta">📅 开卡：${formatDate(card.applyDate)}</div>`
+        : '';
+      const featureTags = card.features.map(f => `<span class="feature-tag">${f}</span>`).join('');
+      const ratesHtml = card.rates.map(r =>
+        `<div class="sub-rate"><span>${r.label}</span><strong>${r.value}</strong></div>`
+      ).join('');
+      const capHtml = card.cap ? `<div class="cap-note">${card.cap}</div>` : '';
+      const extraHtml = card.extra ? `<div class="extra-note">${card.extra}</div>` : '';
+
+      return `
+        <div class="card" style="--bank-color:${bank.color}">
+          <div class="card-top">
+            <div>
+              <div class="card-name">${card.name}</div>
+              ${dateHtml}
+            </div>
+            <span class="holder-chip chip-${card.holder.toLowerCase()}">${card.holder}</span>
+          </div>
+          <div class="rate-row">
+            <span class="rate-pct" style="color:${bank.color}">${card.mainRate}</span>
+            <span class="rate-label">${card.mainLabel}</span>
+          </div>
+          <div class="features">${featureTags}</div>
+          <hr class="divider">
+          ${ratesHtml}
+          ${capHtml}
+          ${extraHtml}
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="bank-section">
+        <div class="bank-header">
+          <div class="bank-logo" style="background:${bank.color}">${bank.abbr}</div>
+          <div class="bank-name">${bank.name}</div>
+        </div>
+        <div class="cards-grid">${cardsHtml}</div>
+      </div>`;
+  }).join('');
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric' });
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', (i===0&&name==='timeline')||(i===1&&name==='cards'));
+  });
+  document.getElementById('tab-timeline').classList.toggle('active', name==='timeline');
+  document.getElementById('tab-cards').classList.toggle('active', name==='cards');
+}
+
+// ─────────────────────────────────────────
+// SUPABASE CONNECTION (obfuscated — see SGCashback for why: this defeats
+// automated bot scraping of public repos, it is NOT real encryption. Real
+// protection comes from RLS + the login-token gate below.)
+// ─────────────────────────────────────────
+function _deobf(s) { return atob(s).split('').reverse().join(''); }
+const SUPABASE_URL = _deobf('b2MuZXNhYmFwdXMueml3c2d4dG1kZnBxYnNrZ2lwcHovLzpzcHR0aA==');
+const SUPABASE_ANON_KEY = _deobf('UVZyWjItQ003WjEzc0NCeHNWYXViUFVXNGVGak1QWTdfUV9yV3N4clZHUy4wM04yUVRPNVlUTzVBak02SUNjNFZtSXNjak4wTWpNeFFETzNFak9pUVhZcEpDTGk0MmJ1Rm1JNklTWnM5bWNpd2lJNmwyZHpkR2UwMUdabUJYY2lOM2FubEdjd3BuSTZJaVpsSm5Jc0lTWnpGbVloQlhkekppT2lNM2NwSnllLjlKQ1ZYcGtJNklDYzVSbklzSWlOMUl6VUlKaU9pY0diaEp5ZQ==');
+
+let db = null;
+try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.warn('Supabase init failed', e); }
+
+// ─────────────────────────────────────────
+// LOGIN TOKEN GATE (same pattern as SGCashback — shared token_login table)
+// ─────────────────────────────────────────
+function getToken() { return localStorage.getItem('loginToken'); }
+
+async function validateLoginToken(token) {
+  if(!token) return false;
+  try {
+    const {data, error} = await db.rpc('validate_login_token', {p_token: token});
+    if(error) { console.warn('[login] validate error', error); return false; }
+    return data === true;
+  } catch(err) { console.warn('[login] validate failed', err); return false; }
+}
+
+function escHtml(s) {
+  if(!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function showLoginPrompt(errorMsg) {
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="login-overlay" class="login-overlay">
+      <div class="login-box">
+        <div style="font-size:40px;margin-bottom:12px">🔒</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px;color:#1a1a2e">Login Required</div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:16px;text-align:center">Enter your login token to continue</div>
+        <input id="login-token-input" class="login-input" type="text" placeholder="Login token" autocapitalize="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')submitLoginToken()">
+        <div id="login-error" class="login-error">${errorMsg?escHtml(errorMsg):''}</div>
+        <button class="login-btn" onclick="submitLoginToken()">Continue</button>
+      </div>
+    </div>`);
+  if(errorMsg) document.getElementById('login-error').style.display = 'block';
+  document.getElementById('login-token-input').focus();
+}
+
+window.submitLoginToken = async function() {
+  const input = document.getElementById('login-token-input');
+  const token = input.value.trim();
+  if(!token) return;
+  const btn = document.querySelector('#login-overlay .login-btn');
+  const errEl = document.getElementById('login-error');
+  btn.disabled = true; btn.textContent = 'Checking…'; errEl.style.display = 'none';
+  const valid = await validateLoginToken(token);
+  if(valid) {
+    localStorage.setItem('loginToken', token);
+    document.getElementById('login-overlay').remove();
+    initApp();
+  } else {
+    btn.disabled = false; btn.textContent = 'Continue';
+    errEl.textContent = 'Invalid token. Please try again.';
+    errEl.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
+};
+
+async function bootWithAuth() {
+  const stored = getToken();
+  if(stored) {
+    const valid = await validateLoginToken(stored);
+    if(valid) { initApp(); return; }
+    localStorage.removeItem('loginToken');
+    showLoginPrompt('Your login token is no longer valid. Please enter a new one.');
+    return;
+  }
+  showLoginPrompt();
+}
+
+// ─────────────────────────────────────────
+// DATA LOADING: fetch from Supabase, transform into the shapes
+// renderTimeline()/renderCards() already expect.
+// ─────────────────────────────────────────
+function buildBanksAndTimeline(bankRows, cardRows, rateRows) {
+  const bankById = {};
+  bankRows.forEach(b => bankById[b.id] = b);
+
+  const ratesByCard = {};
+  rateRows.forEach(r => {
+    if(!ratesByCard[r.card_id]) ratesByCard[r.card_id] = [];
+    ratesByCard[r.card_id].push({ label: r.label, value: r.value });
+  });
+
+  const sortedCards = [...cardRows].sort((a,b) => a.sort_order - b.sort_order);
+
+  // timelineData: bank → holder → all cards (active + closed)
+  const timelineByBank = [];
+  const bankIdx = {};
+  sortedCards.forEach(c => {
+    const bank = bankById[c.bank_id];
+    if(!bank) return;
+    let bi = bankIdx[bank.id];
+    if(bi === undefined) {
+      bi = timelineByBank.length;
+      bankIdx[bank.id] = bi;
+      timelineByBank.push({ bank: bank.name, color: bank.color, holders: [] });
+    }
+    const group = timelineByBank[bi];
+    let holderEntry = group.holders.find(h => h.holder === c.holder_id);
+    if(!holderEntry) {
+      holderEntry = { holder: c.holder_id, cards: [] };
+      group.holders.push(holderEntry);
+    }
+    holderEntry.cards.push({
+      name: c.card_name,
+      openDate: c.open_date,
+      closeDate: c.close_date,
+      note: c.note,
+      openApprox: c.open_approx,
+    });
+  });
+
+  // banks: bank → active cards only, with full rate detail
+  const banksByBank = [];
+  const activeIdx = {};
+  sortedCards.filter(c => !c.close_date).forEach(c => {
+    const bank = bankById[c.bank_id];
+    if(!bank) return;
+    let bi = activeIdx[bank.id];
+    if(bi === undefined) {
+      bi = banksByBank.length;
+      activeIdx[bank.id] = bi;
+      banksByBank.push({ name: bank.name, color: bank.color, abbr: bank.abbr, cards: [] });
+    }
+    banksByBank[bi].cards.push({
+      holder: c.holder_id,
+      name: c.card_name,
+      applyDate: c.open_date,
+      mainRate: c.main_rate,
+      mainLabel: c.main_label,
+      features: c.features || [],
+      rates: ratesByCard[c.id] || [],
+      cap: c.cap_note,
+      extra: c.extra_note,
+    });
+  });
+
+  return { timelineData: timelineByBank, banks: banksByBank };
+}
+
+async function initApp() {
+  document.querySelector('.container').innerHTML = '<div style="text-align:center;padding:60px 0;color:#6b7280">Loading…</div>';
+  try {
+    const token = getToken();
+    const [banksRes, cardsRes, ratesRes] = await Promise.all([
+      db.rpc('rpc_get_banks', {p_token: token}),
+      db.rpc('rpc_get_cards', {p_token: token}),
+      db.rpc('rpc_get_card_rate_details', {p_token: token}),
+    ]);
+    if(banksRes.error) throw banksRes.error;
+    if(cardsRes.error) throw cardsRes.error;
+    if(ratesRes.error) throw ratesRes.error;
+
+    const built = buildBanksAndTimeline(banksRes.data || [], cardsRes.data || [], ratesRes.data || []);
+    timelineData = built.timelineData;
+    banks = built.banks;
+  } catch(err) {
+    console.warn('[data] load failed', err);
+    document.querySelector('.container').innerHTML = `<div style="text-align:center;padding:60px 0;color:#dc2626">Failed to load data: ${escHtml(err && err.message ? err.message : String(err))}</div>`;
+    return;
+  }
+  document.querySelector('.container').innerHTML = `
+    <div id="tab-timeline" class="tab-panel active"></div>
+    <div id="tab-cards" class="tab-panel"></div>`;
+  renderTimeline();
+  renderCards();
+}
+
+bootWithAuth();
+</script>
+</body>
+</html>
