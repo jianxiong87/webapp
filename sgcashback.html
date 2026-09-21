@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SGCashback">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="icon" href="icon-180.png">
+<title>SGCashback</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#f2f2f7; --card:#fff; --label:#000; --label2:#3c3c4399; --label3:#8e8e93;
+  --sep:#c6c6c8; --blue:#007aff; --green:#34c759; --red:#ff3b30; --orange:#ff9500;
+  --fill:#f2f2f7; --card2:#f2f2f7;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#000;--card:#1c1c1e;--label:#fff;--label2:#ebebf599;--label3:#636366;--sep:#38383a;--fill:#2c2c2e;--card2:#2c2c2e;}
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{position:fixed;inset:0;height:100%;width:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--label);font-size:14px;}
+#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;position:relative;overflow:hidden;touch-action:none;}
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;overscroll-behavior:contain;touch-action:pan-y;}
+#content.frozen{overflow:hidden;display:flex;flex-direction:column;min-height:0;touch-action:none;}
+.frozen-top{flex-shrink:0;touch-action:none;}
+.frozen-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;overscroll-behavior:contain;touch-action:pan-y;}
+.frozen-bottom{flex-shrink:0;touch-action:none;}
+#tabbar{touch-action:none;}
+#tabbar{display:flex;background:var(--card);border-top:0.5px solid var(--sep);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px);flex-shrink:0;}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 14px;border:none;background:none;cursor:pointer;gap:3px;opacity:.6;transition:opacity .15s;}
+.tab-btn.active{opacity:1;color:var(--blue);}
+.tab-icon{font-size:20px;line-height:1;}
+.tab-label{font-size:10px;font-weight:500;color:inherit;}
+.tab-btn.active .tab-label{color:var(--blue);}
+.nav{display:flex;align-items:center;padding:12px 54px 10px 12px;border-bottom:0.5px solid var(--sep);background:var(--card);position:sticky;top:0;z-index:10;gap:8px;}
+.nav-title{flex:1;text-align:center;font-size:17px;font-weight:600;}
+.nav-arrow{font-size:22px;color:var(--blue);padding:0 4px;background:none;border:none;cursor:pointer;width:32px;}
+.nav-btn{font-size:13px;color:var(--blue);font-weight:600;padding:4px 8px;background:none;border:none;cursor:pointer;}
+.section{background:var(--card);border-radius:14px;padding:14px 16px;margin:0 16px 12px;}
+.section-title{font-size:15px;font-weight:600;margin-bottom:12px;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;}
+.stat-card{background:var(--card);border-radius:14px;padding:14px;}
+.stat-label{font-size:12px;font-weight:500;color:var(--label2);margin-bottom:4px;}
+.stat-val{font-size:22px;font-weight:700;}
+.stat-val.green{color:var(--green);}
+.progress-bar-wrap{margin-bottom:12px;}
+.progress-bar-head{display:flex;justify-content:space-between;margin-bottom:4px;}
+.progress-bar-label{font-size:13px;font-weight:600;}
+.progress-bar-val{font-size:12px;color:var(--label2);}
+.progress-bar-val.met{color:var(--green);}
+.progress-track{height:6px;background:var(--fill);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .3s;}
+.progress-excl{font-size:11px;color:var(--label3);margin-top:3px;}
+.card-section-hd{display:flex;align-items:center;justify-content:space-between;margin:0 16px 6px;padding-left:10px;border-left:3px solid;}
+.card-section-name{font-size:13px;font-weight:700;}
+.card-section-cb{font-size:13px;font-weight:700;color:var(--green);}
+.entry-row{display:flex;align-items:center;padding:10px 0;cursor:pointer;}
+.entry-row+.entry-row{border-top:0.5px solid var(--sep);}
+.entry-icon{font-size:22px;width:34px;text-align:center;flex-shrink:0;}
+.entry-info{flex:1;min-width:0;}
+.entry-label{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.entry-sub{font-size:12px;color:var(--label2);margin-top:1px;}
+.entry-right{text-align:right;flex-shrink:0;}
+.entry-amt{font-size:15px;font-weight:600;}
+.entry-cb{font-size:12px;font-weight:600;color:var(--green);margin-top:1px;}
+.empty{display:flex;flex-direction:column;align-items:center;padding-top:80px;gap:8px;}
+.empty-icon{font-size:48px;}
+.empty-title{font-size:17px;font-weight:600;}
+.empty-desc{font-size:14px;color:var(--label2);}
+.fab{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 98px);right:max(20px, calc(50vw - 280px));width:56px;height:56px;border-radius:28px;background:var(--blue);border:none;color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,122,255,.4);z-index:20;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;}
+.modal-bg.open{display:block;}
+.sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;background:var(--card);border-radius:20px 20px 0 0;z-index:101;max-height:90dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,16px);}
+.sheet-pill{width:36px;height:4px;background:var(--sep);border-radius:2px;margin:10px auto 0;}
+.sheet-hd{display:flex;align-items:center;padding:14px 16px 10px;}
+.sheet-title{flex:1;font-size:18px;font-weight:700;}
+.sheet-body{overflow-y:auto;padding:0 16px 16px;flex:1;}
+.field-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--label2);margin-bottom:8px;margin-top:14px;}
+.field-label:first-child{margin-top:0;}
+.chips-scroll{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+.chip{border-radius:8px;padding:6px 12px;background:var(--fill);border:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--label);}
+.chip.active{background:var(--blue);color:#fff;}
+.card-pick-row{display:flex;align-items:center;justify-content:space-between;border-radius:10px;padding:12px;background:var(--fill);margin-bottom:6px;cursor:pointer;border:1.5px solid transparent;}
+.card-pick-row.active{border-color:var(--accent,var(--blue));}
+.card-pick-name{font-size:14px;font-weight:600;}
+.card-pick-right{text-align:right;}
+.card-pick-rate{font-size:15px;font-weight:600;}
+.card-pick-note{font-size:10px;margin-top:2px;}
+.field-input{width:100%;background:var(--fill);border:none;border-radius:10px;padding:12px 14px;font-size:17px;color:var(--label);outline:none;font-family:inherit;}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer;}
+.toggle-track{width:44px;height:26px;border-radius:13px;background:var(--fill);position:relative;flex-shrink:0;transition:background .2s;}
+.toggle-track.on{background:var(--blue);}
+.toggle-thumb{width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-track.on .toggle-thumb{left:20px;}
+.save-btn{width:100%;padding:16px;border-radius:12px;background:var(--blue);color:#fff;font-size:16px;font-weight:600;border:none;cursor:pointer;margin-top:12px;}
+.save-btn:disabled{background:var(--fill);color:var(--label3);}
+.del-btn{font-size:15px;color:var(--red);font-weight:600;background:none;border:none;cursor:pointer;padding:4px 8px;}
+.close-btn{font-size:18px;color:var(--label2);background:none;border:none;cursor:pointer;padding:4px;}
+.group-hdr{background:var(--fill);padding:6px 26px;margin:0 0 0;} 
+.group-hdr-txt{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--label2);}
+.rates-wrap{overflow-x:auto;}
+.rates-table{width:100%;border-collapse:collapse;}
+.rates-table th{font-size:11px;font-weight:700;padding:8px 4px;text-align:center;border-bottom:1px solid var(--sep);}
+.rates-table th.cat-col{text-align:left;padding-left:10px;}
+.rates-table td{padding:8px 4px;text-align:center;border-bottom:0.5px solid var(--sep);font-size:12px;}
+.rates-table td.cat-col{text-align:left;padding-left:10px;padding-right:4px;}
+.rates-table tr:nth-child(even) td{background:var(--fill);}
+.best-pill{background:rgba(52,199,89,.14);border-radius:6px;padding:2px 5px;color:var(--green);font-weight:700;}
+.excl-txt{color:var(--label3);}
+.low-txt{color:var(--label2);font-size:11px;}
+.cat-lbl{font-size:12px;font-weight:500;}
+.cat-mcc{font-size:10px;color:var(--label3);margin-top:1px;}
+.filter-bar{display:flex;overflow-x:auto;gap:8px;padding:10px 16px;border-bottom:0.5px solid var(--sep);scrollbar-width:none;}
+.filter-bar::-webkit-scrollbar{display:none;}
+.filter-chip{white-space:nowrap;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:500;border:none;cursor:pointer;background:var(--card);color:var(--label);}
+.filter-chip.active{background:var(--blue);color:#fff;}
+.hero-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:16px;}
+.hero-card{background:var(--card);border-radius:14px;padding:12px;text-align:center;}
+.hero-val{font-size:18px;font-weight:700;margin-bottom:2px;}
+.hero-val.green{color:var(--green);}
+.hero-lbl{font-size:11px;color:var(--label2);}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.bar-label{font-size:13px;font-weight:500;width:80px;flex-shrink:0;}
+.bar-track{flex:1;height:8px;background:var(--fill);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;}
+.bar-right{font-size:12px;color:var(--label2);width:80px;text-align:right;flex-shrink:0;}
+.acc-month{border-bottom:0.5px solid var(--sep);}
+.acc-month-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;background:var(--card);}
+.acc-month-label{font-size:15px;font-weight:600;}
+.acc-month-total{font-size:13px;color:var(--label2);}
+.acc-month-body{padding:0 16px 12px;}
+.ins-row{display:flex;align-items:flex-start;padding:8px 0;gap:10px;}
+.ins-row+.ins-row{border-top:0.5px solid var(--sep);}
+.ins-person{font-size:11px;font-weight:700;width:56px;padding-top:2px;flex-shrink:0;}
+.ins-info{flex:1;min-width:0;}
+.ins-cat{font-size:13px;font-weight:500;}
+.ins-note{font-size:11px;color:var(--label2);margin-top:1px;}
+.ins-card{font-size:11px;color:var(--label3);}
+.ins-amt{font-size:14px;font-weight:600;text-align:right;flex-shrink:0;}
+.ins-table{width:100%;border-collapse:collapse;font-size:12px;}
+.ins-table th,.ins-table td{padding:6px 8px;border-bottom:0.5px solid var(--sep);}
+.ins-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--label2);text-align:right;}
+.ins-table th:first-child,.ins-table td:first-child{text-align:left;}
+.ins-table td{text-align:right;}
+.ins-cpf{color:var(--orange);}
+.monthly-row{display:flex;align-items:center;padding:10px 0;gap:8px;cursor:pointer;}
+.monthly-row+.monthly-row{border-top:0.5px solid var(--sep);}
+.monthly-date{font-size:13px;font-weight:600;width:36px;flex-shrink:0;}
+.monthly-bal{font-size:14px;font-weight:600;flex:1;text-align:right;}
+.monthly-in{font-size:13px;color:var(--green);width:70px;text-align:right;}
+.monthly-out{font-size:13px;color:var(--red);width:70px;text-align:right;}
+.monthly-remark{font-size:11px;color:var(--label3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:60px;}
+.seg-ctrl{display:flex;background:var(--fill);border-radius:10px;padding:2px;margin:6px 16px;}
+.seg-btn{flex:1;padding:5px 7px;border-radius:8px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;color:var(--label2);transition:background .15s,color .15s;}
+.seg-btn.active{background:var(--card);color:var(--label);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.advisor-search{background:var(--fill);border:none;border-radius:12px;padding:10px 14px 10px 36px;font-size:15px;color:var(--label);outline:none;width:100%;font-family:inherit;}
+.search-wrap{position:relative;padding:10px 16px;}
+.search-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--label3);font-size:16px;pointer-events:none;}
+.cat-row{display:flex;align-items:center;padding:12px 16px;gap:12px;cursor:pointer;background:var(--card);}
+.cat-row:active{background:var(--fill);}
+.cat-row+.cat-row{border-top:0.5px solid var(--sep);}
+.cat-row-icon{font-size:24px;width:36px;text-align:center;}
+.cat-row-info{flex:1;}
+.cat-row-label{font-size:15px;font-weight:500;}
+.cat-row-mcc{font-size:12px;color:var(--label3);}
+.cat-row-arrow{color:var(--sep);font-size:16px;}
+.ranked-row{display:flex;align-items:center;padding:10px 0;gap:10px;}
+.ranked-row+.ranked-row{border-top:0.5px solid var(--sep);}
+.ranked-num{font-size:12px;color:var(--label3);width:16px;}
+.ranked-name{flex:1;font-size:14px;font-weight:500;}
+.ranked-rate{font-size:15px;font-weight:700;}
+.ranked-cb{font-size:12px;color:var(--label2);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;}
+.settings-row+.settings-row{border-top:0.5px solid var(--sep);}
+.settings-row-label{font-size:15px;}
+.danger-btn{width:100%;padding:14px;border-radius:12px;background:rgba(255,59,48,.1);color:var(--red);font-size:15px;font-weight:600;border:none;cursor:pointer;margin-top:4px;}
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 158px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;}
+.login-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;}
+.login-box{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;}
+.settings-gear{position:fixed;top:max(12px,env(safe-area-inset-top));right:14px;width:34px;height:34px;border-radius:17px;background:var(--fill);border:none;color:var(--label2);font-size:16px;cursor:pointer;z-index:50;display:flex;align-items:center;justify-content:center;}
+.toast.show{opacity:1;}
+.loading{display:flex;align-items:center;justify-content:center;height:200px;color:var(--label3);font-size:15px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <button id="settings-gear" class="settings-gear" onclick="openSettingsSheet()">⚙</button>
+  <div id="content"></div>
+  <nav id="tabbar"></nav>
+  <div id="modal-bg" class="modal-bg"></div>
+  <div id="sheet-wrap" style="display:none"></div>
+  <div id="toast" class="toast"></div>
+</div>
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CARDS = [
+  {id:'ocbcXJ',      name:'OCBC 365 (XJ)',    short:'OCBC XJ',   accent:'#d6232a',rateKey:'ocbc365'},
+  {id:'ocbcJX',      name:'OCBC 365 (JX)',    short:'OCBC JX',   accent:'#c0392b',rateKey:'ocbc365'},
+  {id:'uobEvol',     name:'UOB EVOL',         short:'Evol',      accent:'#1a4fa0',rateKey:'uobEvol'},
+  {id:'uobAmex',     name:'UOB Absolute Amex',short:'Amex',      accent:'#007b5e',rateKey:'uobAmex'},
+  {id:'uobKF',       name:'UOB KrisFlyer',    short:'KF',        accent:'#2563eb',rateKey:'uobKF'},
+  {id:'uobOneDebit', name:'UOB ONE Debit',    short:'ONE Debit', accent:'#0070ba',rateKey:'uobOneDebit',isDebit:true},
+  {id:'citiPM',      name:'Citi PremierMiles',short:'PremierMiles',accent:'#003b70',rateKey:'citiPM'},
+];
+const GROUPS = [
+  {id:'daily',    icon:'🏠',label:'Daily Life'},
+  {id:'transport',icon:'🚗',label:'Transport'},
+  {id:'health',   icon:'💊',label:'Health'},
+  {id:'bills',    icon:'📄',label:'Bills & Services'},
+  {id:'shopping', icon:'🛍️',label:'Shopping'},
+  {id:'travel',   icon:'✈️',label:'Travel'},
+  {id:'govt',     icon:'🏛️',label:'Govt & Finance'},
+];
+const CATS = [
+  {id:'restaurant',   group:'daily',    icon:'🍽️',label:'Dining',                    mcc:'5812',     rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol $30 cap shared with ALL online+tap spend. OCBC 365 wins at >$600/mo dining.'},
+  {id:'bakery',       group:'daily',    icon:'🥐',label:'Bakery',                    mcc:'5462',     rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 5462 — BreadTalk, Four Leaves, Bengawan Solo etc.'},
+  {id:'fastfood',     group:'daily',    icon:'🍔',label:'Fast Food',                 mcc:'5814',     rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.04,cap:30,label:'2–4%†',f:'min'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:"McDonald's earns 2–4% on ONE Debit (†). OCBC 365: 5%, Evol: 10% contactless/online."},
+  {id:'fooddelivery', group:'daily',    icon:'🛵',label:'Food Delivery',             mcc:'5812',     rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'OCBC 365: 5% for Deliveroo, foodpanda and GrabFood ONLY — HungryPanda and other apps earn 0.25% base.'},
+  {id:'shopbackgo',   group:'daily',    icon:'🔵',label:'ShopBack Go',               mcc:'varies',   subGroup:'shopback',rates:{ocbc365:{pct:.05,cap:80,label:'up to 5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'up to 10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'up to 2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'ShopBack charges via app = CNP = Evol online spend (10%, $30 shared cap). Pick merchant type below.'},
+  {id:'hawker',       group:'daily',    icon:'🍜',label:'Foodcourt',                 mcc:'5812',     rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Many hawkers cash-only — check terminal.'},
+  {id:'groceries',    group:'daily',    icon:'🛒',label:'Groceries (In-store)',       mcc:'5411',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: tap phone at checkout from $30 pool. OCBC 365: 3% all supermarkets.'},
+  {id:'onlinegrocery',group:'daily',    icon:'🥦',label:'Online Groceries',          mcc:'5411',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.04,cap:30,label:'2–4%† (Shopee)',f:'min'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Shopee Supermarket earns 2–4% on ONE Debit (†).'},
+  {id:'beauty',       group:'daily',    icon:'💅',label:'Beauty & Wellness',         mcc:'7230',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% tap from $30 pool.'},
+  {id:'watsons',      group:'daily',    icon:'💊',label:'Watsons',                   mcc:'5912',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%*',f:'min'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 5912. OCBC 365 earns 3% at Watsons (min $800/mo, $80 cap).'},
+  {id:'pharmacy',     group:'daily',    icon:'🏪',label:'Pharmacy (Guardian/Unity)', mcc:'5912',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%*',f:'min'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 5912 — Guardian, Unity, Caring.'},
+  {id:'petrol',       group:'transport',icon:'⛽',label:'Petrol',                    mcc:'5541',     rates:{ocbc365:{pct:.06,cap:80,label:'6%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%*',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'⭐ OCBC 365 wins: 6% at ALL stations, no app needed.'},
+  {id:'mrt',          group:'transport',icon:'🚇',label:'MRT / Bus',                 mcc:'4111',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.04,cap:30,label:'2–4%†',f:'min'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'SimplyGo earns 2–4% on ONE Debit (†). KF: 2.4 mpd. Citi PremierMiles: EZ-link/SimplyGo/TRANSIT excluded by merchant name in Citi T&Cs.'},
+  {id:'grab',         group:'transport',icon:'🚗',label:'Grab',                      mcc:'4121',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.04,cap:30,label:'2–4%†',f:'min'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Grab earns 2–4% on ONE Debit (†). Evol: Grab in-app = online, draws from $30 pool.'},
+  {id:'taxi',         group:'transport',icon:'🚕',label:'Taxi',                      mcc:'4121',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'KF: 2.4 mpd (MCC 4121).'},
+  {id:'evcharge',     group:'transport',icon:'⚡',label:'EV Charging',               mcc:'5552',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'OCBC 365: dedicated 3% EV category.'},
+  {id:'parking',      group:'transport',icon:'🅿️',label:'Parking (Mall / Building)', mcc:'7523',     rates:{ocbc365:{pct:0,label:'0%',f:'excl'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 7523 excluded by all cards incl. Citi PremierMiles. Only Amex earns 1.7%.'},
+  {id:'seasonpark',   group:'transport',icon:'🏢',label:'Season Parking',            mcc:'7523',     rates:{ocbc365:{pct:0,label:'0%',f:'excl'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 7523 excluded by all cards incl. Citi PremierMiles. Amex earns 1.7%.'},
+  {id:'cashcard',     group:'transport',icon:'💳',label:'CashCard Top-up',           mcc:'6540',     rates:{ocbc365:{pct:0,label:'0%',f:'excl'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 6540 excluded by all cards incl. Citi PremierMiles. Amex earns 1.7%.'},
+  {id:'tng',          group:'transport',icon:'🇲🇾',label:'TNG Malaysia eWallet',     mcc:'6540',     rates:{ocbc365:{pct:0,label:'0%',f:'excl'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 6540 excluded by all cards incl. Citi PremierMiles. Amex earns 1.7%.'},
+  {id:'carworkshop',  group:'transport',icon:'🔧',label:'Car Workshop',              mcc:'7538',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% contactless tap from $30 pool.'},
+  {id:'carshare',     group:'transport',icon:'🚗',label:'Car Sharing (GetGo/Shariot)',mcc:'7512',    rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'GetGo & Shariot code as MCC 7512. Note: Tribecar codes as MCC 4121 — see Car Sharing (Tribecar).'},
+  {id:'carshare_tribe',group:'transport',icon:'🚙',label:'Car Sharing (Tribecar)',   mcc:'4121',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.04,cap:30,label:'2–4%†',f:'min'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Tribecar codes as MCC 4121 (Taxi). ⭐ Better rewards than GetGo: KF 2.4 mpd (3.6%), OCBC 3%.'},
+  {id:'carrental',    group:'transport',icon:'🔑',label:'Car Rental (Overseas)',      mcc:'3355–3389',rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.01,label:'1%'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Major agencies billed in FCY. Evol drops to 1% FCY.'},
+  {id:'clinic',       group:'health',   icon:'🏥',label:'Clinic / GP (Private)',      mcc:'8011',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%*',f:'min'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Private GP/specialist (MCC 8011). KF excluded.'},
+  {id:'polyclinic',   group:'health',   icon:'🏛️',label:'Polyclinic/SingHealth/Whitecoat',mcc:'8099',rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 8099. Evol & KF excluded.'},
+  {id:'dental',       group:'health',   icon:'🦷',label:'Dental',                    mcc:'8021',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%*',f:'min'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 8021 — dental clinics.'},
+  {id:'hospital',     group:'health',   icon:'🏥',label:'Hospital',                  mcc:'8062',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 8062. Evol, KF & Citi PremierMiles excluded. OCBC 0.25%, Amex 0.3% best.'},
+  {id:'utilities',    group:'bills',    icon:'💡',label:'Utilities',                 mcc:'4900',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'⭐ OCBC 365: 3% recurring electricity. Evol/KF/Citi PremierMiles: MCC 4900 excluded.'},
+  {id:'telco',        group:'bills',    icon:'📱',label:'Telco',                     mcc:'4813',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:20,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% but $20 cap SHARED with gym+streaming.'},
+  {id:'streaming',    group:'bills',    icon:'🎬',label:'Streaming',                 mcc:'4899',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:20,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% but $20/mo cap shared with gym+telco.'},
+  {id:'gym',          group:'bills',    icon:'🏋️',label:'Gym',                       mcc:'7941',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:20,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% on selected gyms, $20 cap shared with telco+streaming.'},
+  {id:'localshop',    group:'shopping', icon:'🛍️',label:'Local Shopping',            mcc:'5999',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: tap to pay = 10% from $30 pool.'},
+  {id:'onlineshop',   group:'shopping', icon:'💻',label:'Online Shopping',           mcc:'5999',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.04,cap:30,label:'2–4%† (Shopee)',f:'min'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Shopee earns 2–4% on ONE Debit (†).'},
+  {id:'electronics',  group:'shopping', icon:'📺',label:'Electronics',               mcc:'5734',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% online/tap from $30 pool.'},
+  {id:'fashion',      group:'shopping', icon:'👗',label:'Fashion',                   mcc:'5691',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% tap/online from $30 pool.'},
+  {id:'homefurnish',  group:'shopping', icon:'🛋️',label:'Home & Furniture',          mcc:'5712',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% online (IKEA.com, Courts) or tap in-store.'},
+  {id:'entertainment',group:'shopping', icon:'🎭',label:'Entertainment',             mcc:'7832',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Evol: 10% contactless/online from $30 pool.'},
+  {id:'gaming',       group:'shopping', icon:'🎮',label:'Gaming',                    mcc:'7995',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 7995 excluded by Evol/KF/ONE Debit/Citi PremierMiles. Use Amex: 1.7%.'},
+  {id:'overseas',     group:'shopping', icon:'🌏',label:'Overseas',                  mcc:'—',        rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.01,label:'1%'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Amex: 1.7% on all FX spend, no cap.'},
+  {id:'sb_dining',     group:'shopback',icon:'🍽️',label:'Dining & Cafes',            mcc:'5812/5814',rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 5812/5814.'},
+  {id:'sb_bakery',     group:'shopback',icon:'🥐',label:'Bakery & Takeaway',         mcc:'5812/5814',rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'BreadTalk, Ya Kun, Toast Box.'},
+  {id:'sb_hawker',     group:'shopback',icon:'🍜',label:'Hawker / Food Court',       mcc:'5812',     rates:{ocbc365:{pct:.05,cap:80,label:'5%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Kopitiam, Food Republic.'},
+  {id:'sb_grocery',    group:'shopback',icon:'🛒',label:'Supermarket',               mcc:'5411',     rates:{ocbc365:{pct:.03,cap:80,label:'3%',f:'min'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'FairPrice, Cold Storage.'},
+  {id:'sb_pharmacy',   group:'shopback',icon:'💊',label:'Pharmacy & Beauty',         mcc:'5912',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:"Watson's, Guardian."},
+  {id:'sb_fashion',    group:'shopback',icon:'👗',label:'Fashion & Retail',          mcc:'5691',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 5691.'},
+  {id:'sb_electronics',group:'shopback',icon:'📱',label:'Electronics',               mcc:'5734',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 5734.'},
+  {id:'sb_home',       group:'shopback',icon:'🛋️',label:'Home & Furniture',          mcc:'5712',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 5712.'},
+  {id:'sb_entertainment',group:'shopback',icon:'🎭',label:'Entertainment',           mcc:'7832',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 7832.'},
+  {id:'sb_other',      group:'shopback',icon:'🏪',label:'Other Merchant',            mcc:'5999',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Verify MCC on your statement.'},
+  {id:'siascoot',     group:'travel',   icon:'✈️',label:'SIA / Scoot',               mcc:'4511',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.003,label:'0.3%'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'3 mpd (4.5%)',f:'miles',mpd:3},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'⭐ KF: 3 mpd on SIA/Scoot ≈ 4.5% value. Always use KrisFlyer for SIA/Scoot.'},
+  {id:'otherair',     group:'travel',   icon:'🛫',label:'Other Airlines',            mcc:'4511',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Amex: 1.7% reliable.'},
+  {id:'hotelsdirect', group:'travel',   icon:'🏨',label:'Hotel (Direct)',             mcc:'7011',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Booking at hilton.com, marriott.com etc.'},
+  {id:'hoteldining',  group:'travel',   icon:'🍽️',label:'Hotel/Resort Dining',       mcc:'7011',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Dining inside a hotel, resort or country club. OCBC 365 T&C: restaurant located within a hotel may NOT be classified as Dining → earns 0.25%, not 5%.'},
+  {id:'hotels3p',     group:'travel',   icon:'🌐',label:'Hotel (Agoda/Trip.com)',     mcc:'4722',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'7.2 mpd (10.8%)',f:'miles',mpd:7.2}},note:'Agoda, Booking.com, Expedia, Hotels.com, Trip.com. ⭐ Citi PremierMiles: 7.2 mpd is an Agoda-only promo (until end 2026) — other platforms on this card earn base 1.2/2.2 mpd only.'},
+  {id:'tourdirect',   group:'travel',   icon:'🐳',label:'Tours & Activities (Direct)',mcc:'7999/4411',rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Booking direct on operator website. Book via Klook instead for better rates.'},
+  {id:'tourklook',    group:'travel',   icon:'🎫',label:'Tours & Activities (Klook/Viator)',mcc:'4722',rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'2.4 mpd (3.6%)',f:'miles',mpd:2.4},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'Klook, Viator, GetYourGuide — MCC 4722 (Travel Agency), billed in SGD.'},
+  {id:'tourpelago',   group:'travel',   icon:'🌴',label:'Tours & Activities (Pelago/Kris+)',mcc:'4722',rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.10,cap:30,label:'10%',f:'min'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'3 mpd (4.5%)',f:'miles',mpd:3},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'⭐⭐ Pelago (pelago.com) and Kris+ are SIA Group — earns 3 mpd (4.5%) on KF UOB. Jul 2026 promo: up to 11 mpd.'},
+  {id:'insurance',    group:'govt',     icon:'🛡️',label:'Insurance',                 mcc:'6300',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 6300 excluded by Evol/KF/ONE Debit/Citi PremierMiles. Use Amex: 1.7%.'},
+  {id:'activesg',     group:'govt',     icon:'🏃',label:'ActiveSG',                  mcc:'9399',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 9399 — excluded by all UOB cards and Citi PremierMiles. OCBC 0.25%, Amex 0.3%.'},
+  {id:'education',    group:'govt',     icon:'📚',label:'Education',                 mcc:'8211',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 8211-8299 education MCCs excluded by Evol/KF/ONE Debit/Citi PremierMiles. OCBC 0.25%, Amex 0.3%.'},
+  {id:'childcare',    group:'govt',     icon:'👶',label:'Childcare',                 mcc:'8351',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:.003,label:'0.3%'},uobAmex:{pct:.017,label:'1.7%'},uobKF:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2},uobOneDebit:{pct:.01,label:'1%*'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 8351 not excluded by any card. Amex: 1.7% best.'},
+  {id:'roadtax',      group:'govt',     icon:'📋',label:'Road Tax',                  mcc:'7399',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:0,label:'0%',f:'excl'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:null,label:'1.2 mpd (1.8%)',f:'miles',mpd:1.2}},note:'MCC 7399. Amex no longer accepted (PayPal discontinued Jul 2025).'},
+  {id:'charity',      group:'govt',     icon:'❤️',label:'Charity / Donation',        mcc:'8398',     rates:{ocbc365:{pct:.0025,label:'0.25%'},uobEvol:{pct:0,label:'0%',f:'excl'},uobAmex:{pct:.003,label:'0.3%'},uobKF:{pct:0,label:'0 mpd',f:'excl'},uobOneDebit:{pct:0,label:'0%',f:'excl'},citiPM:{pct:0,label:'0 mpd',f:'excl'}},note:'MCC 8398 excluded by Evol/KF/ONE Debit/Citi PremierMiles. OCBC 0.25%, Amex 0.3%.'},
+];
+const NO_MIN_SPEND = {
+  ocbc365:new Set(['parking','seasonpark','cashcard','tng','roadtax','activesg','insurance','education','charity']),
+  uobEvol: new Set(['utilities','parking','seasonpark','cashcard','tng','insurance','education','charity','roadtax','activesg','gaming']),
+  uobOne:  new Set(['parking','seasonpark','cashcard','tng','education','charity','roadtax','activesg','gaming']),
+};
+const INSURANCE_DEFAULTS = [
+  {id:'ins_xj_prushield_2026',       year:2026,month:2, day:23,person:'xj',      category:'medical_cpf',  cardId:null,         amount:516.61, note:'PruShield 3.23 (CPF)'},
+  {id:'ins_xj_pruextra_2026',        year:2026,month:2, day:23,person:'xj',      category:'medical_rider',cardId:'uobEvol',    amount:355.50, note:'PruExtra 3.23'},
+  {id:'ins_jackson_prushield_2026',  year:2026,month:2, day:27,person:'jackson', category:'medical_cpf',  cardId:null,         amount:238.78, note:'PruShield 3.27 (CPF)'},
+  {id:'ins_jackson_pruextra_2026',   year:2026,month:2, day:27,person:'jackson', category:'medical_rider',cardId:'uobEvol',    amount:258.00, note:'PruExtra 3.27'},
+  {id:'ins_jayden_m2b_2026',         year:2026,month:2, day:12,person:'jayden',  category:'life',         cardId:'uobOneDebit',amount:884.00, note:'M2B 3.12 / 2024–2039 (15 yrs)'},
+  {id:'ins_jx_prushield_2026',       year:2026,month:3, day:1, person:'jx',      category:'medical_cpf',  cardId:null,         amount:616.94, note:'PruShield 4.1 (CPF)'},
+  {id:'ins_jx_pruextra_2026',        year:2026,month:3, day:1, person:'jx',      category:'medical_rider',cardId:'uobEvol',    amount:395.00, note:'PruExtra 4.1 (cash)'},
+  {id:'ins_xj_prulife_2026',         year:2026,month:4, day:13,person:'xj',      category:'life',         cardId:'uobEvol',    amount:2485.25,note:'Prulife Multiplier 5.13'},
+  {id:'ins_jx_pruman_2026',          year:2026,month:4, day:14,person:'jx',      category:'life_extra',   cardId:'uobEvol',    amount:341.00, note:'Pruman 5.14'},
+  {id:'ins_xj_pruwealth_2026',       year:2026,month:5, day:19,person:'xj',      category:'saving',       cardId:'uobEvol',    amount:8000.00,note:'PruWealth 6.19 / 5 yrs until 2031 (XJ & JX)'},
+  {id:'ins_jayden_healthshield_2026',year:2026,month:6, day:12,person:'jayden',  category:'medical_cpf',  cardId:null,         amount:301.00, note:'HealthShield 7.12 (CPF)'},
+  {id:'ins_jayden_vitahealth_2026',  year:2026,month:6, day:12,person:'jayden',  category:'medical_rider',cardId:'uobOneDebit',amount:234.00, note:'Vitahealth rider 7.12'},
+  {id:'ins_jx_saving_2026',          year:2026,month:9, day:7, person:'jx',      category:'saving',       cardId:'uobEvol',    amount:3741.89,note:'Saving plan 10.7 (25 yrs)'},
+  {id:'ins_jx_prulife_2026',         year:2026,month:11,day:13,person:'jx',      category:'life',         cardId:'uobEvol',    amount:1871.00,note:'Prulife 12.13'},
+  {id:'ins_jackson_pruactive_2026',  year:2026,month:11,day:24,person:'jackson', category:'life',         cardId:'uobEvol',    amount:2517.49,note:'PruActive 12.24 / 2021–2026'},
+];
+const INS_CATS = {medical_cpf:'Medical (CPF)',medical_rider:'Medical Rider',life:'Life',life_extra:'Life Extra',saving:'Saving'};
+const INS_PERSONS = {xj:'XJ',jx:'JX',jackson:'Jackson',jayden:'Jayden'};
+const INS_CARDS = [{id:'uobEvol',name:'UOB EVOL'},{id:'uobOneDebit',name:'UOB ONE Debit'},{id:'uobAmex',name:'UOB Absolute Amex'}];
+const BANK_ACCOUNTS = [{id:'xj',label:'XJ OCBC'},{id:'jx',label:'JX OCBC'}];
+
+// ── SUPABASE + STORAGE ────────────────────────────────────────────────────────
+// Connection details are stored obfuscated (reversed + base64) rather than
+// plaintext, purely to avoid tripping automated bots that scrape public repos
+// for recognizable API-key patterns (e.g. JWT "eyJ..." prefixes, "supabase.co"
+// substrings). This is NOT encryption and provides no protection against a
+// human reading the source — the anon key is inherently public-facing by
+// design; real protection comes from the RLS policies on each table.
+function _deobf(s) { return atob(s).split('').reverse().join(''); }
+const SUPABASE_URL = _deobf('b2MuZXNhYmFwdXMueml3c2d4dG1kZnBxYnNrZ2lwcHovLzpzcHR0aA==');
+const SUPABASE_ANON_KEY = _deobf('UVZyWjItQ003WjEzc0NCeHNWYXViUFVXNGVGak1QWTdfUV9yV3N4clZHUy4wM04yUVRPNVlUTzVBak02SUNjNFZtSXNjak4wTWpNeFFETzNFak9pUVhZcEpDTGk0MmJ1Rm1JNklTWnM5bWNpd2lJNmwyZHpkR2UwMUdabUJYY2lOM2FubEdjd3BuSTZJaVpsSm5Jc0lTWnpGbVloQlhkekppT2lNM2NwSnllLjlKQ1ZYcGtJNklDYzVSbklzSWlOMUl6VUlKaU9pY0diaEp5ZQ==');
+let db;
+try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.warn('Supabase init failed', e); }
+
+function lsGet(key, def) { try { const v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch { return def; } }
+function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
+function getToken() { return localStorage.getItem('loginToken'); }
+
+async function loadEntries() {
+  try {
+    const {data,error} = await db.rpc('rpc_get_entries', {p_token: getToken()});
+    if(error) throw error;
+    const entries = data.map(r=>({id:r.id,date:r.date,catId:r.cat_id,cardId:r.card_id,amount:parseFloat(r.amount),isOverseas:r.is_overseas||false}));
+    lsSet('entries_v1', entries); return entries;
+  } catch { return lsGet('entries_v1', []); }
+}
+async function addEntry(e) {
+  const ne = {...e, id: Date.now().toString()};
+  const cached = lsGet('entries_v1', []);
+  lsSet('entries_v1', [...cached, ne]);
+  try { await db.rpc('rpc_add_entry', {p_token:getToken(), p_id:ne.id, p_date:ne.date, p_cat_id:ne.catId, p_card_id:ne.cardId, p_amount:ne.amount, p_is_overseas:ne.isOverseas||false}); } catch(err){console.warn(err);}
+  return ne;
+}
+async function addEntryWithId(ne) {
+  const cached = lsGet('entries_v1', []);
+  lsSet('entries_v1', [...cached, ne]);
+  try { await db.rpc('rpc_add_entry', {p_token:getToken(), p_id:ne.id, p_date:ne.date, p_cat_id:ne.catId, p_card_id:ne.cardId, p_amount:ne.amount, p_is_overseas:ne.isOverseas||false}); } catch(err){console.warn(err);}
+  return ne;
+}
+async function updateEntry(id, u) {
+  const cached = lsGet('entries_v1',[]);
+  lsSet('entries_v1', cached.map(e=>e.id===id?{...e,...u}:e));
+  try { await db.rpc('rpc_update_entry', {p_token:getToken(), p_id:id, p_date:u.date, p_cat_id:u.catId, p_card_id:u.cardId, p_amount:u.amount, p_is_overseas:u.isOverseas||false}); } catch(err){console.warn(err);}
+}
+async function deleteEntry(id) {
+  const cached = lsGet('entries_v1',[]);
+  lsSet('entries_v1', cached.filter(e=>e.id!==id));
+  try { await db.rpc('rpc_delete_entry', {p_token:getToken(), p_id:id}); } catch(err){console.warn(err);}
+}
+
+async function loadSettings() {
+  const def = {myCards:['ocbcXJ','ocbcJX','uobEvol','uobAmex','uobKF']};
+  try {
+    const {data,error} = await db.rpc('rpc_get_settings', {p_token:getToken()});
+    if(error) throw error;
+    const row = data && data[0];
+    const s = row ? {...def,myCards:row.my_cards} : def;
+    lsSet('settings_v1',s); return s;
+  } catch { return lsGet('settings_v1', def); }
+}
+async function saveSettings(s) {
+  lsSet('settings_v1',s);
+  try { await db.rpc('rpc_save_settings', {p_token:getToken(), p_my_cards:s.myCards}); } catch(err){console.warn(err);}
+}
+
+async function loadBankSetup(accountId) {
+  const def = {isSetup:false,initBal:0,initDate:''};
+  try {
+    const {data,error} = await db.rpc('rpc_get_bank_setup', {p_token:getToken(), p_account_id:accountId});
+    if(error) throw error;
+    const row = data && data[0];
+    const s = row ? {isSetup:row.is_setup,initBal:parseFloat(row.init_bal),initDate:row.init_date} : def;
+    lsSet('bank_setup_v1_'+accountId, s); return s;
+  } catch(err) { console.warn('[loadBankSetup]', accountId, err); return lsGet('bank_setup_v1_'+accountId, def); }
+}
+async function saveBankSetup(accountId, setup) {
+  lsSet('bank_setup_v1_'+accountId, setup);
+  try { await db.rpc('rpc_save_bank_setup', {p_token:getToken(), p_account_id:accountId, p_is_setup:setup.isSetup, p_init_bal:setup.initBal, p_init_date:setup.initDate}); } catch(err){console.warn(err);}
+}
+
+async function loadDailyData(accountId) {
+  try {
+    const {data,error} = await db.rpc('rpc_get_bank_daily', {p_token:getToken(), p_account_id:accountId});
+    if(error) throw error;
+    const daily = {};
+    for(const row of data) {
+      if(!daily[row.date]) daily[row.date]=[];
+      daily[row.date].push({id:row.id,in:parseFloat(row.in_amt||0),out:parseFloat(row.out_amt||0),remark:row.remark||''});
+    }
+    lsSet('bank_daily_v1_'+accountId, daily); return daily;
+  } catch(err) { console.warn('[loadDailyData]', accountId, err); return lsGet('bank_daily_v1_'+accountId, {}); }
+}
+async function saveDailyData(accountId, data) {
+  lsSet('bank_daily_v1_'+accountId, data);
+  const rows = [];
+  let idx=0;
+  for(const [date,entries] of Object.entries(data)) {
+    for(const e of entries) {
+      rows.push({id:e.id||`${accountId}_${date}_${idx++}_${Date.now()}`,date,in_amt:+(e.in||0),out_amt:+(e.out||0),remark:e.remark||''});
+    }
+  }
+  try { await db.rpc('rpc_save_bank_daily', {p_token:getToken(), p_account_id:accountId, p_rows:rows}); } catch(err){console.warn(err);}
+}
+
+async function loadInsurance() {
+  try {
+    const {data,error} = await db.rpc('rpc_get_insurance', {p_token:getToken()});
+    if(error) throw error;
+    const entries = data.map(r=>({id:r.id,year:r.year,month:r.month-1,day:r.day||null,person:r.person,category:r.category,cardId:r.card_id||null,amount:parseFloat(r.amount),note:r.note||''}));
+    lsSet('insurance_v1', entries); return entries;
+  } catch {
+    const cached = lsGet('insurance_v1', null);
+    return cached || INSURANCE_DEFAULTS;
+  }
+}
+async function addInsuranceEntry(e) {
+  const ne = {...e, id:e.id||`ins_${Date.now()}`};
+  const cached = lsGet('insurance_v1',[]) || [];
+  lsSet('insurance_v1', [...cached, ne]);
+  try { await db.rpc('rpc_add_insurance', {p_token:getToken(), p_id:ne.id, p_year:ne.year, p_month:ne.month+1, p_day:ne.day||null, p_person:ne.person, p_category:ne.category, p_card_id:ne.cardId||null, p_amount:ne.amount, p_note:ne.note||''}); } catch(err){console.warn(err);}
+  return ne;
+}
+async function updateInsuranceEntry(id, u) {
+  const cached = lsGet('insurance_v1',[]);
+  lsSet('insurance_v1', cached.map(e=>e.id===id?{...e,...u}:e));
+  try { await db.rpc('rpc_update_insurance', {p_token:getToken(), p_id:id, p_year:u.year, p_month:u.month+1, p_day:u.day||null, p_person:u.person, p_category:u.category, p_card_id:u.cardId||null, p_amount:u.amount, p_note:u.note||''}); } catch(err){console.warn(err);}
+}
+async function deleteInsuranceEntry(id) {
+  const cached = lsGet('insurance_v1',[]);
+  lsSet('insurance_v1', cached.filter(e=>e.id!==id));
+  try { await db.rpc('rpc_delete_insurance', {p_token:getToken(), p_id:id}); } catch(err){console.warn(err);}
+}
+
+// ── AUTO-RECURRING INSURANCE (mirrors native app behaviour) ─────────────────
+function seriesKeyOf(id) { return id.replace(/_\d{4}$/, ''); }
+
+async function autoSeedYearlyInsurance() {
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const groups = {};
+  for(const e of S.insurance) {
+    const key = seriesKeyOf(e.id);
+    if(!groups[key] || e.year > groups[key].year) groups[key] = e;
+  }
+  const created = [];
+  for(const key in groups) {
+    const latest = groups[key];
+    for(let y = latest.year + 1; y <= curYear; y++) {
+      const anniversary = new Date(y, latest.month, latest.day||1);
+      if(now < anniversary) continue;
+      const newId = `${key}_${y}`;
+      if(S.insurance.some(e=>e.id===newId)) continue;
+      const ne = {...latest, id:newId, year:y};
+      try { await addInsuranceEntry(ne); } catch(err){ console.warn('[storage] autoSeedYearlyInsurance failed:', err); }
+      S.insurance = [...S.insurance, ne];
+      created.push(ne);
+    }
+  }
+  if(created.length) console.log(`[storage] autoSeedYearlyInsurance: created ${created.length}`);
+  return created;
+}
+
+async function autoAddInsuranceToBills(insEntry) {
+  if(!insEntry.cardId) return; // CPF-paid entries don't hit any card
+  const billId = `autoins_${insEntry.id}`;
+  if(S.entries.some(e=>e.id===billId)) return; // already linked, avoid duplicates
+  const pad = n => String(n).padStart(2,'0');
+  const date = `${insEntry.year}-${pad(insEntry.month+1)}-${pad(insEntry.day||1)}`;
+  const ne = {id:billId, date, catId:'insurance', cardId:insEntry.cardId, amount:insEntry.amount, isOverseas:false};
+  try {
+    await addEntryWithId(ne);
+    S.entries = [...S.entries, ne];
+    console.log(`[storage] autoAddInsuranceToBills: added $${insEntry.amount}`);
+  } catch(err){ console.warn('[storage] autoAddInsuranceToBills failed:', err); }
+}
+
+async function autoSyncAllInsuranceToBills() {
+  for(const e of S.insurance) await autoAddInsuranceToBills(e);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function getRateFor(cat, cardId) {
+  const card = CARDS.find(c=>c.id===cardId);
+  if(!card) return {};
+  return cat.rates[card.rateKey] || {};
+}
+function getEffVal(rv) {
+  if(!rv||rv.f==='excl'||rv.pct===0) return 0;
+  if(rv.f==='miles') return (rv.mpd||0)*0.015;
+  return rv.pct||0;
+}
+function calcCashback(rv, amount) {
+  if(!rv||!rv.pct||rv.f==='excl'||rv.f==='miles') return null;
+  const raw = rv.pct*amount;
+  return rv.cap ? Math.min(raw,rv.cap) : raw;
+}
+function fmt(n) { return '$'+(+n).toFixed(2); }
+function fmtN(n) { return (Math.round(n*100)/100).toFixed(2); }
+function today() { return new Date().toISOString().slice(0,10); }
+
+// ── SG PUBLIC HOLIDAYS ────────────────────────────────────────────────────────
+// NOTE: dates for movable holidays (Chinese New Year, Hari Raya, Vesak, Deepavali)
+// are best-effort estimates and should be verified/updated against the official
+// MOM Singapore public holiday list for each year.
+const SG_HOLIDAYS = {
+  '2025-01-01':"New Year's Day",'2025-01-29':'Chinese New Year','2025-01-30':'Chinese New Year',
+  '2025-03-31':'Hari Raya Puasa','2025-04-18':'Good Friday','2025-05-01':'Labour Day',
+  '2025-05-12':'Vesak Day','2025-06-07':'Hari Raya Haji','2025-08-09':'National Day',
+  '2025-10-20':'Deepavali','2025-12-25':'Christmas Day',
+  '2026-01-01':"New Year's Day",'2026-02-17':'Chinese New Year','2026-02-18':'Chinese New Year',
+  '2026-03-20':'Hari Raya Puasa','2026-04-03':'Good Friday','2026-05-01':'Labour Day',
+  '2026-05-27':'Hari Raya Haji','2026-05-31':'Vesak Day','2026-08-09':'National Day',
+  '2026-11-08':'Deepavali','2026-12-25':'Christmas Day',
+};
+function sgHolidayName(ds) { return SG_HOLIDAYS[ds] || null; }
+function isNonWorkingDay(ds) {
+  const dow = new Date(ds+'T00:00:00').getDay();
+  return dow===0 || !!sgHolidayName(ds); // Sunday or SG holiday (Saturday is a working day)
+}
+function nextWorkingDayStr(ds) {
+  let d = ds;
+  do { d = addDaysStr(d,1); } while(isNonWorkingDay(d));
+  return d;
+}
+function shiftReasonLabel(ds) {
+  const d = new Date(ds+'T00:00:00');
+  const label = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  const holiday = sgHolidayName(ds);
+  return holiday ? `${label}, ${holiday}` : `${label} (Sun)`;
+}
+function daysInMonth(y,m) { return new Date(y,m+1,0).getDate(); }
+
+let _toast;
+function showToast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(_toast); _toast=setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const S = {
+  tab:'advisor',
+  entries:[], settings:{myCards:['ocbcXJ','ocbcJX','uobEvol','uobAmex','uobKF']},
+  insurance:[],
+  bankSetup:{xj:{isSetup:false,initBal:0,initDate:''},jx:{isSetup:false,initBal:0,initDate:''}},
+  bankDaily:{xj:{},jx:{}},
+  billsYear:new Date().getFullYear(), billsMonth:new Date().getMonth(),
+  summaryYear:new Date().getFullYear(), summaryMonth:new Date().getMonth(),
+  monthlyAccount:'xj', monthlyYear:new Date().getFullYear(), monthlyMonth:new Date().getMonth(),
+  accountsAccount:'xj', accountsYear:new Date().getFullYear(),
+  insYear:new Date().getFullYear(),
+  advisorSearch:'', advisorGroup:null,
+  ratesGroup:null,
+};
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openSheet(html, onClose) {
+  const bg = document.getElementById('modal-bg');
+  const wrap = document.getElementById('sheet-wrap');
+  wrap.innerHTML = `<div class="sheet">${html}</div>`;
+  wrap.style.display='block';
+  bg.classList.add('open');
+  if(onClose) bg.onclick = ()=>{closeSheet(); onClose();};
+  else bg.onclick = closeSheet;
+}
+function closeSheet() {
+  document.getElementById('modal-bg').classList.remove('open');
+  const wrap = document.getElementById('sheet-wrap');
+  wrap.style.display='none'; wrap.innerHTML='';
+}
+
+function confirmDialog(msg, onConfirm) {
+  if(confirm(msg)) onConfirm();
+}
+
+// ── ADVISOR TAB ───────────────────────────────────────────────────────────────
+function renderAdvisor() {
+  const myCards = S.settings.myCards;
+  const q = S.advisorSearch.toLowerCase();
+  const mainGroups = GROUPS.filter(g=>g.id!=='shopback');
+  const visGroups = S.advisorGroup ? mainGroups.filter(g=>g.id===S.advisorGroup) : mainGroups;
+  const allCats = CATS.filter(c=>c.group!=='shopback');
+  const filtered = allCats.filter(c=>{
+    if(S.advisorGroup && c.group!==S.advisorGroup) return false;
+    if(!q) return true;
+    return c.label.toLowerCase().includes(q)||c.mcc.toLowerCase().includes(q)||(c.note&&c.note.toLowerCase().includes(q));
+  });
+
+  const groupChips = `<div class="filter-bar">
+    <button class="filter-chip ${!S.advisorGroup?'active':''}" onclick="S.advisorGroup=null;render()">All</button>
+    ${mainGroups.map(g=>`<button class="filter-chip ${S.advisorGroup===g.id?'active':''}" onclick="S.advisorGroup='${g.id}';render()">${g.icon} ${g.label}</button>`).join('')}
+  </div>`;
+
+  let listHtml = '';
+  if(q || S.advisorGroup) {
+    listHtml = `<div style="background:var(--card)">` +
+      filtered.map(c=>`<div class="cat-row" onclick="showCatDetail('${c.id}')">
+        <div class="cat-row-icon">${c.icon}</div>
+        <div class="cat-row-info"><div class="cat-row-label">${c.label}</div><div class="cat-row-mcc">${c.mcc}</div></div>
+        <div class="cat-row-arrow">›</div>
+      </div>`).join('') + `</div>`;
+    if(filtered.length===0) listHtml=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div></div>`;
+  } else {
+    listHtml = mainGroups.map(g=>{
+      const cats = CATS.filter(c=>c.group===g.id);
+      return `<div class="group-hdr"><div class="group-hdr-txt">${g.icon}  ${g.label.toUpperCase()}</div></div>
+        <div style="background:var(--card);margin-bottom:4px">` +
+        cats.map(c=>`<div class="cat-row" onclick="showCatDetail('${c.id}')">
+          <div class="cat-row-icon">${c.icon}</div>
+          <div class="cat-row-info"><div class="cat-row-label">${c.label}</div><div class="cat-row-mcc">${c.mcc}</div></div>
+          <div class="cat-row-arrow">›</div>
+        </div>`).join('') + `</div>`;
+    }).join('');
+  }
+
+  return `<div class="search-wrap"><span class="search-icon">🔍</span>
+    <input class="advisor-search" placeholder="Search categories…" value="${escHtml(S.advisorSearch)}"
+      oninput="S.advisorSearch=this.value;render()" type="search">
+  </div>
+  ${groupChips}
+  <div style="padding-bottom:20px">${listHtml}</div>`;
+}
+
+function showCatDetail(catId) {
+  const cat = CATS.find(c=>c.id===catId);
+  if(!cat) return;
+  let isOverseas = false;
+  let amount = '';
+
+  function computeDeduped() {
+    const myCards = S.settings.myCards;
+    const ranked = myCards.map(cardId=>{
+      const card = CARDS.find(c=>c.id===cardId);
+      if(!card) return null;
+      let rv = {...getRateFor(cat, cardId)};
+      if(isOverseas && cardId==='uobEvol' && rv.pct===0.10) rv = {...rv,pct:0.01,label:'1% (overseas)'};
+      if(isOverseas && cardId==='citiPM' && rv.mpd===1.2) rv = {...rv,mpd:2.2,label:'2.2 mpd (3.3%, overseas)'};
+      return {card, rv, val:getEffVal(rv)};
+    }).filter(x=>x&&x.val>0).sort((a,b)=>b.val-a.val);
+    // Deduplicate by rateKey
+    const seen=new Set();
+    return ranked.filter(x=>{const k=x.card.rateKey; if(seen.has(k)) return false; seen.add(k); return true;});
+  }
+
+  function buildResults() {
+    const deduped = computeDeduped();
+    const amtNum = parseFloat(amount)||0;
+    return `<div class="field-label">Best Card to Use</div>
+      ${deduped.length===0?'<div style="color:var(--label3);font-size:14px;padding:8px 0">All cards excluded for this category.</div>':
+        deduped.map((x,i)=>{
+          const cb = amtNum>0 ? calcCashback(x.rv, amtNum) : null;
+          return `<div class="ranked-row">
+            <div class="ranked-num">${i+1}</div>
+            <div>
+              <div class="ranked-name" style="color:${x.card.accent}">${x.card.name}</div>
+              ${cb!=null?`<div class="ranked-cb">≈ ${fmt(cb)} cashback</div>`:''}
+            </div>
+            <div style="text-align:right">
+              <div class="ranked-rate" style="color:${x.card.accent}">${x.rv.label}</div>
+            </div>
+          </div>`;
+        }).join('')
+      }
+      <button class="save-btn" style="margin-top:16px" onclick="closeSheet();openAddBill('${catId}','${deduped[0]?.card?.id||''}')">
+        + Add to Bills
+      </button>`;
+  }
+
+  function buildDetail() {
+    return `<div class="sheet-pill"></div>
+    <div class="sheet-hd">
+      <div class="sheet-title">${cat.icon} ${cat.label}</div>
+      <button class="close-btn" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      ${cat.note?`<div style="background:var(--fill);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--label2)">${escHtml(cat.note)}</div>`:''}
+      <div class="field-label">Transaction Type</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px" id="txnTypeChips">
+        <button class="chip ${!isOverseas?'active':''}" onclick="window._setOverseas(false)">🇸🇬 Local</button>
+        <button class="chip ${isOverseas?'active':''}" onclick="window._setOverseas(true)">🌐 Overseas</button>
+      </div>
+      <div class="field-label">Amount ($) — for cashback preview</div>
+      <input class="field-input" style="margin-bottom:14px" type="text" inputmode="decimal" pattern="[0-9]*\.?[0-9]*" placeholder="e.g. 150.00" value="${amount}"
+        oninput="window._onAdvisorAmt(this.value)">
+      <div id="catDetailResults">${buildResults()}</div>
+    </div>`;
+  }
+
+  window._onAdvisorAmt = function(val) {
+    amount = val;
+    const results = document.getElementById('catDetailResults');
+    if(results) results.innerHTML = buildResults();
+  };
+  window._setOverseas = function(val) {
+    isOverseas = val;
+    const chips = document.getElementById('txnTypeChips');
+    if(chips) {
+      chips.children[0].classList.toggle('active', !isOverseas);
+      chips.children[1].classList.toggle('active', isOverseas);
+    }
+    const results = document.getElementById('catDetailResults');
+    if(results) results.innerHTML = buildResults();
+  };
+  openSheet(buildDetail());
+}
+
+// ── BILLS TAB ─────────────────────────────────────────────────────────────────
+function getBillsCalc(entries) {
+  const monthEntries = entries.filter(e=>{
+    const d=new Date(e.date); return d.getFullYear()===S.billsYear && d.getMonth()===S.billsMonth;
+  });
+  const cbByCard={};
+  let totalSpend=0;
+  monthEntries.forEach(e=>{
+    const cat=CATS.find(c=>c.id===e.catId); if(!cat) return;
+    let rv={...getRateFor(cat,e.cardId)};
+    if(e.isOverseas && e.cardId==='citiPM' && rv.f==='miles' && rv.mpd===1.2)
+      rv={...rv,mpd:2.2,label:'2.2 mpd (3.3%, overseas)'};
+    if(e.isOverseas && e.cardId==='uobEvol' && rv.pct===0.10)
+      rv={...rv,pct:0.01,label:'1% (overseas)'};
+    const cb=calcCashback(rv,e.amount)||0;
+    cbByCard[e.cardId]=(cbByCard[e.cardId]||0)+cb;
+    totalSpend+=e.amount;
+  });
+  // OCBC cap
+  const ocbcXJElig=monthEntries.filter(e=>e.cardId==='ocbcXJ').reduce((s,e)=>s+(NO_MIN_SPEND.ocbc365.has(e.catId)?0:e.amount),0);
+  const ocbcJXElig=monthEntries.filter(e=>e.cardId==='ocbcJX').reduce((s,e)=>s+(NO_MIN_SPEND.ocbc365.has(e.catId)?0:e.amount),0);
+  if((cbByCard['ocbcXJ']||0)>0) cbByCard['ocbcXJ']=Math.min(cbByCard['ocbcXJ'],ocbcXJElig>=1600?160:80);
+  if((cbByCard['ocbcJX']||0)>0) cbByCard['ocbcJX']=Math.min(cbByCard['ocbcJX'],ocbcJXElig>=1600?160:80);
+  const totalCB=Object.values(cbByCard).reduce((s,v)=>s+v,0);
+  return {monthEntries,cbByCard,totalSpend,totalCB,ocbcXJElig,ocbcJXElig};
+}
+
+function renderBills() {
+  const {monthEntries,cbByCard,totalSpend,totalCB,ocbcXJElig,ocbcJXElig} = getBillsCalc(S.entries);
+
+  const ocbcXJExcl=monthEntries.filter(e=>e.cardId==='ocbcXJ').reduce((s,e)=>s+(NO_MIN_SPEND.ocbc365.has(e.catId)?e.amount:0),0);
+  const ocbcJXExcl=monthEntries.filter(e=>e.cardId==='ocbcJX').reduce((s,e)=>s+(NO_MIN_SPEND.ocbc365.has(e.catId)?e.amount:0),0);
+  const evolEntries=monthEntries.filter(e=>e.cardId==='uobEvol');
+  const oneDebitEntries=monthEntries.filter(e=>e.cardId==='uobOneDebit');
+  const evolElig=evolEntries.reduce((s,e)=>s+(NO_MIN_SPEND.uobEvol.has(e.catId)?0:e.amount),0);
+  const evolExcl=evolEntries.reduce((s,e)=>s+(NO_MIN_SPEND.uobEvol.has(e.catId)?e.amount:0),0);
+  const allOne=[...evolEntries,...oneDebitEntries];
+  const oneElig=allOne.reduce((s,e)=>s+(NO_MIN_SPEND.uobOne.has(e.catId)?0:e.amount),0);
+  const oneExcl=allOne.reduce((s,e)=>s+(NO_MIN_SPEND.uobOne.has(e.catId)?e.amount:0),0);
+
+  const hasOCBCxj=monthEntries.some(e=>e.cardId==='ocbcXJ');
+  const hasOCBCjx=monthEntries.some(e=>e.cardId==='ocbcJX');
+  const hasEvol=monthEntries.some(e=>e.cardId==='uobEvol');
+  const hasOneDebit=monthEntries.some(e=>e.cardId==='uobOneDebit');
+
+  function minBar(label,amount,excl,color,target) {
+    const pct=Math.min(amount/target,1);
+    const met=amount>=target;
+    const toGo=target-amount;
+    return `<div class="progress-bar-wrap">
+      <div class="progress-bar-head">
+        <span class="progress-bar-label">${label}</span>
+        <span class="progress-bar-val ${met?'met':''}">${fmt(amount)} / $${target} ${met?'✓':`($${fmtN(toGo)} to go)`}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct*100}%;background:${met?'var(--green)':color}"></div></div>
+      ${excl>0?`<div class="progress-excl">+ $${fmtN(excl)} excluded (not counted toward min-spend)</div>`:''}
+    </div>`;
+  }
+
+  let minSpendSec='';
+  if(hasOCBCxj||hasOCBCjx||hasEvol) {
+    minSpendSec=`<div class="section">
+      <div class="section-title">$800 Min-Spend (Cashback)</div>
+      ${hasOCBCxj?minBar('OCBC XJ',ocbcXJElig,ocbcXJExcl,'#d6232a',800):''}
+      ${hasOCBCjx?minBar('OCBC JX',ocbcJXElig,ocbcJXExcl,'#c0392b',800):''}
+      ${hasEvol?minBar('UOB Evol',evolElig,evolExcl,'#1a4fa0',800):''}
+    </div>`;
+  }
+  let oneSec='';
+  if(hasEvol||hasOneDebit) {
+    oneSec=`<div class="section">
+      <div class="section-title">$500 UOB ONE Qualifying Spend</div>
+      ${minBar('EVOL + ONE Debit → ONE Account',oneElig,oneExcl,'#0070ba',500)}
+      <div style="font-size:11px;color:var(--label3);margin-top:-4px">Insurance & utilities count here (excluded from Evol $800 above)</div>
+    </div>`;
+  }
+
+  const activeCards = CARDS.filter(card=>monthEntries.some(e=>e.cardId===card.id));
+  let entriesHtml='';
+  if(monthEntries.length===0) {
+    entriesHtml=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No bills yet</div><div class="empty-desc">Tap + to add a transaction</div></div>`;
+  } else {
+    entriesHtml = activeCards.map(card=>{
+      const cardEntries=monthEntries.filter(e=>e.cardId===card.id).sort((a,b)=>b.date.localeCompare(a.date));
+      const cardCB=cbByCard[card.id]||0;
+      return `<div style="margin-bottom:12px">
+        <div class="card-section-hd" style="border-color:${card.accent}">
+          <span class="card-section-name" style="color:${card.accent}">${card.name}</span>
+          ${cardCB>0?`<span class="card-section-cb">+${fmt(cardCB)}</span>`:''}
+        </div>
+        <div class="section" style="margin-top:0">
+          ${cardEntries.map((e,i)=>{
+            const cat=CATS.find(c=>c.id===e.catId);
+            let rv=cat?{...getRateFor(cat,e.cardId)}:{};
+            if(e.isOverseas && e.cardId==='citiPM' && rv.f==='miles' && rv.mpd===1.2)
+              rv={...rv,mpd:2.2,label:'2.2 mpd (3.3%, overseas)'};
+            if(e.isOverseas && e.cardId==='uobEvol' && rv.pct===0.10)
+              rv={...rv,pct:0.01,label:'1% (overseas)'};
+            const cb=cat?(calcCashback(rv,e.amount)||0):0;
+            return `<div class="entry-row" onclick="openEditBill('${e.id}')" oncontextmenu="event.preventDefault();deleteBillConfirm('${e.id}')">
+              <div class="entry-icon">${cat?.icon||'💳'}</div>
+              <div class="entry-info">
+                <div class="entry-label">${cat?.label||e.catId}</div>
+                <div class="entry-sub">${e.date}${e.isOverseas?' 🌐':''}</div>
+              </div>
+              <div class="entry-right">
+                <div class="entry-amt">${fmt(e.amount)}</div>
+                ${cb>0?`<div class="entry-cb">+${fmt(cb)}</div>`:''}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  return `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-label">Total Spend</div><div class="stat-val">${fmt(totalSpend)}</div></div>
+      <div class="stat-card"><div class="stat-label">Cashback</div><div class="stat-val green">${fmt(totalCB)}</div></div>
+    </div>
+    ${minSpendSec}${oneSec}
+    <div style="padding-bottom:80px">${entriesHtml}</div>`;
+}
+
+window.deleteBillConfirm = async function(id) {
+  if(!confirm('Remove this bill entry?')) return;
+  S.entries = S.entries.filter(e=>e.id!==id);
+  await deleteEntry(id);
+  render(); showToast('Deleted');
+};
+
+window.openAddBill = function(prefillCatId='', prefillCardId='') {
+  openBillSheet(null, prefillCatId, prefillCardId);
+};
+window.openEditBill = function(id) {
+  const e = S.entries.find(x=>x.id===id);
+  if(e) openBillSheet(e);
+};
+
+function openBillSheet(editEntry, prefillCatId='', prefillCardId='') {
+  const isEdit = !!editEntry;
+  const isShopbackSub = editEntry ? CATS.find(c=>c.id===editEntry.catId)?.group==='shopback' : false;
+  let catId = isShopbackSub ? 'shopbackgo' : (editEntry?.catId||prefillCatId||'');
+  let subCatId = isShopbackSub ? (editEntry?.catId||'') : '';
+  let cardId = editEntry?.cardId||prefillCardId||'';
+  let amount = editEntry ? String(editEntry.amount) : '';
+  let date = editEntry?.date||(()=>{const d=new Date();return `${S.billsYear}-${String(S.billsMonth+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
+  let isOverseas = editEntry?.isOverseas||false;
+
+  function buildSheet() {
+    const selectedCat = CATS.find(c=>c.id===catId);
+    const selectedSub = subCatId ? CATS.find(c=>c.id===subCatId) : null;
+    const effectiveCat = selectedSub||(selectedCat?.subGroup?null:selectedCat);
+    const canSave = catId&&cardId&&amount&&parseFloat(amount)>0&&(!selectedCat?.subGroup||!!subCatId);
+
+    // Category chips grouped
+    const mainGroups = GROUPS.filter(g=>g.id!=='shopback');
+    let catChipsHtml = mainGroups.map(g=>{
+      const cats=CATS.filter(c=>c.group===g.id);
+      return cats.map(c=>`<button class="chip ${catId===c.id?'active':''}" onclick="window._bc.setCat('${c.id}')">${c.icon} ${c.label}</button>`).join('');
+    }).join('');
+
+    let subChipsHtml='';
+    if(selectedCat?.subGroup) {
+      const subs=CATS.filter(c=>c.group===selectedCat.subGroup);
+      subChipsHtml=`<div class="field-label">Merchant Type</div>
+        <div class="chips-scroll">${subs.map(s=>`<button class="chip ${subCatId===s.id?'active':''}" onclick="window._bc.setSub('${s.id}')">${s.icon} ${s.label}</button>`).join('')}</div>`;
+    }
+
+    let cardPickHtml='';
+    if(catId&&(!selectedCat?.subGroup||subCatId)) {
+      const activeCatId = effectiveCat?.id||catId;
+      cardPickHtml=`<div class="field-label">Card</div>` +
+        CARDS.map(card=>{
+          let rv=effectiveCat?{...getRateFor(effectiveCat,card.id)}:{};
+          if(isOverseas && card.id==='citiPM' && rv.f==='miles' && rv.mpd===1.2)
+            rv={...rv,mpd:2.2,label:'2.2 mpd (3.3%, overseas)'};
+          if(isOverseas && card.id==='uobEvol' && rv.pct===0.10)
+            rv={...rv,pct:0.01,label:'1% (overseas)'};
+          const isExcl=rv.f==='excl'||rv.pct===0;
+          const isOneCard=card.id==='uobEvol'||card.id==='uobOneDebit';
+          const countsForOne=isOneCard&&activeCatId&&!NO_MIN_SPEND.uobOne.has(activeCatId);
+          return `<div class="card-pick-row ${cardId===card.id?'active':''}" style="${cardId===card.id?`--accent:${card.accent};`:''}opacity:${isExcl?.6:1}" onclick="window._bc.setCard('${card.id}')">
+            <div class="card-pick-name" style="color:${card.accent}">${card.name}</div>
+            <div class="card-pick-right">
+              <div class="card-pick-rate" style="color:${isExcl?'var(--label3)':'var(--label)'}">${rv.label||'—'}</div>
+              ${isOneCard?`<div class="card-pick-note" style="color:${countsForOne?'var(--green)':'var(--label3)'}">${countsForOne?'✓ counts to UOB ONE Acc $500':'✗ excl from UOB ONE Acc $500'}</div>`:''}
+            </div>
+          </div>`;
+        }).join('');
+    }
+
+    let amtDateHtml='';
+    if(catId&&cardId) {
+      amtDateHtml=`<div class="field-label">Amount ($)</div>
+        <input class="field-input" style="margin-bottom:12px" type="number" step="0.01" placeholder="e.g. 150.00" value="${amount}" oninput="window._bc.setAmt(this.value)">
+        <div class="field-label">Date</div>
+        <input class="field-input" style="margin-bottom:12px" type="date" value="${date}" oninput="window._bc.setDate(this.value)">
+        <div class="toggle-row" onclick="window._bc.toggleOverseas()">
+          <div class="toggle-track ${isOverseas?'on':''}"><div class="toggle-thumb"></div></div>
+          <span style="font-size:14px">🌐 Overseas transaction</span>
+        </div>`;
+    }
+
+    return `<div class="sheet-pill"></div>
+    <div class="sheet-hd">
+      <div class="sheet-title">${isEdit?'Edit Bill':'Add Bill'}</div>
+      <div style="display:flex;gap:12px;align-items:center">
+        ${isEdit?`<button class="del-btn" onclick="window._bc.del()">Delete</button>`:''}
+        <button class="close-btn" onclick="closeSheet()">✕</button>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div class="field-label">Category</div>
+      <div class="chips-scroll">${catChipsHtml}</div>
+      ${subChipsHtml}
+      ${cardPickHtml}
+      ${amtDateHtml}
+      <button class="save-btn" ${!canSave?'disabled':''} onclick="window._bc.save()">
+        ${isEdit?'Update':'Save'}
+      </button>
+    </div>`;
+  }
+
+  window._bc = {
+    setCat(id){catId=id;subCatId='';cardId='';refreshSheet();},
+    setSub(id){subCatId=id;cardId='';refreshSheet();},
+    setCard(id){cardId=id;refreshSheet();},
+    setAmt(v){amount=v;},
+    setDate(v){date=v;},
+    toggleOverseas(){isOverseas=!isOverseas;refreshSheet();},
+    del(){confirmDialog('Remove this bill entry?',async()=>{S.entries=S.entries.filter(e=>e.id!==editEntry.id);await deleteEntry(editEntry.id);closeSheet();render();showToast('Deleted');});},
+    async save(){
+      const selectedCat=CATS.find(c=>c.id===catId);
+      const selectedSub=subCatId?CATS.find(c=>c.id===subCatId):null;
+      const effectiveCat=selectedSub||(selectedCat?.subGroup?null:selectedCat);
+      const finalCatId=effectiveCat?.id||catId;
+      const entry={catId:finalCatId,cardId,amount:parseFloat(amount),date,isOverseas};
+      if(isEdit){await updateEntry(editEntry.id,entry);S.entries=S.entries.map(e=>e.id===editEntry.id?{...e,...entry}:e);showToast('Updated');}
+      else{const ne=await addEntry(entry);S.entries=[...S.entries,ne];showToast('Saved');}
+      closeSheet();render();
+    }
+  };
+  function refreshSheet(){const w=document.querySelector('#sheet-wrap .sheet');if(w)w.innerHTML=buildSheet();}
+  openSheet(buildSheet());
+}
+
+// ── SUMMARY TAB ───────────────────────────────────────────────────────────────
+function renderSummary() {
+  const monthEntries = S.entries.filter(e=>{
+    const d=new Date(e.date); return d.getFullYear()===S.summaryYear && d.getMonth()===S.summaryMonth;
+  });
+  const {cbByCard,totalSpend,totalCB} = getBillsCalc(S.entries.filter(e=>{
+    const d=new Date(e.date); return d.getFullYear()===S.summaryYear && d.getMonth()===S.summaryMonth;
+  }).map(e=>({...e})));
+  // recalc with summary month
+  const cbByCard2={};let totalSpend2=0;
+  monthEntries.forEach(e=>{
+    const cat=CATS.find(c=>c.id===e.catId); if(!cat) return;
+    let rv={...getRateFor(cat,e.cardId)};
+    if(e.isOverseas && e.cardId==='citiPM' && rv.f==='miles' && rv.mpd===1.2)
+      rv={...rv,mpd:2.2,label:'2.2 mpd (3.3%, overseas)'};
+    if(e.isOverseas && e.cardId==='uobEvol' && rv.pct===0.10)
+      rv={...rv,pct:0.01,label:'1% (overseas)'};
+    const cb=calcCashback(rv,e.amount)||0;
+    cbByCard2[e.cardId]=(cbByCard2[e.cardId]||0)+cb;
+    totalSpend2+=e.amount;
+  });
+  const ocbcXJElig=monthEntries.filter(e=>e.cardId==='ocbcXJ').reduce((s,e)=>s+(NO_MIN_SPEND.ocbc365.has(e.catId)?0:e.amount),0);
+  const ocbcJXElig=monthEntries.filter(e=>e.cardId==='ocbcJX').reduce((s,e)=>s+(NO_MIN_SPEND.ocbc365.has(e.catId)?0:e.amount),0);
+  if((cbByCard2['ocbcXJ']||0)>0) cbByCard2['ocbcXJ']=Math.min(cbByCard2['ocbcXJ'],ocbcXJElig>=1600?160:80);
+  if((cbByCard2['ocbcJX']||0)>0) cbByCard2['ocbcJX']=Math.min(cbByCard2['ocbcJX'],ocbcJXElig>=1600?160:80);
+  const totalCB2=Object.values(cbByCard2).reduce((s,v)=>s+v,0);
+  const effRate=totalSpend2>0?(totalCB2/totalSpend2*100):0;
+
+  // By card
+  const maxCB=Math.max(...Object.values(cbByCard2),0.01);
+  const activeCards=CARDS.filter(c=>monthEntries.some(e=>e.cardId===c.id));
+  const byCardHtml=activeCards.length===0?'<div style="color:var(--label3);font-size:14px">No entries this month.</div>':
+    activeCards.map(card=>{
+      const cb=cbByCard2[card.id]||0;
+      const spend=monthEntries.filter(e=>e.cardId===card.id).reduce((s,e)=>s+e.amount,0);
+      const pct=cb/maxCB;
+      return `<div class="bar-row">
+        <div class="bar-label" style="color:${card.accent};font-size:12px">${card.short}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct*100}%;background:${card.accent}"></div></div>
+        <div class="bar-right"><span style="font-weight:700;color:var(--green)">${fmt(cb)}</span><br><span style="font-size:11px">${fmt(spend)}</span></div>
+      </div>`;
+    }).join('');
+
+  // By category
+  const byCat={};
+  monthEntries.forEach(e=>{
+    if(!byCat[e.catId]) byCat[e.catId]={spend:0,cb:0};
+    const cat=CATS.find(c=>c.id===e.catId);
+    const rv=cat?getRateFor(cat,e.cardId):{};
+    byCat[e.catId].spend+=e.amount;
+    byCat[e.catId].cb+=calcCashback(rv,e.amount)||0;
+  });
+  const byCatHtml=Object.entries(byCat).sort((a,b)=>b[1].spend-a[1].spend).map(([catId,v])=>{
+    const cat=CATS.find(c=>c.id===catId);
+    return `<div class="bar-row">
+      <div style="font-size:20px;width:30px">${cat?.icon||'💳'}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cat?.label||catId}</div></div>
+      <div class="bar-right">${v.cb>0?`<span style="font-weight:700;color:var(--green)">${fmt(v.cb)}</span><br>`:''}
+        <span style="font-size:12px;color:var(--label2)">${fmt(v.spend)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="hero-row">
+    <div class="hero-card"><div class="hero-val green">${fmt(totalCB2)}</div><div class="hero-lbl">Cashback</div></div>
+    <div class="hero-card"><div class="hero-val">${fmt(totalSpend2)}</div><div class="hero-lbl">Total Spend</div></div>
+    <div class="hero-card"><div class="hero-val">${effRate.toFixed(2)}%</div><div class="hero-lbl">Eff. Rate</div></div>
+  </div>
+  <div class="section"><div class="section-title">By Card</div>${byCardHtml}</div>
+  <div class="section" style="margin-bottom:80px"><div class="section-title">By Category</div>${byCatHtml||'<div style="color:var(--label3);font-size:14px">No entries this month.</div>'}</div>`;
+}
+
+function exportSummaryXLSX() {
+  const monthEntries = S.entries.filter(e=>{
+    const d=new Date(e.date); return d.getFullYear()===S.summaryYear && d.getMonth()===S.summaryMonth;
+  });
+  if(!monthEntries.length){showToast('Nothing to export');return;}
+  let totalSpend=0,totalCB=0;
+  const rows=[['Date','Category','Card','Amount ($)','Rate','Cashback ($)']];
+  monthEntries.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    const cat=CATS.find(c=>c.id===e.catId);
+    const card=CARDS.find(c=>c.id===e.cardId);
+    const rv=cat?getRateFor(cat,e.cardId):{};
+    const cb=cat?(calcCashback(rv,e.amount)||0):0;
+    rows.push([e.date,cat?.label||e.catId,card?.short||e.cardId,e.amount,rv.label||'',+cb.toFixed(4)]);
+    totalSpend+=e.amount; totalCB+=cb;
+  });
+  rows.push([]);
+  rows.push(['Total Spend','','',+totalSpend.toFixed(2)]);
+  rows.push(['Total Cashback','','','','',+totalCB.toFixed(4)]);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:12},{wch:26},{wch:16},{wch:12},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,`${MONTHS[S.summaryMonth]} ${S.summaryYear}`);
+  XLSX.writeFile(wb,`cashback_${S.summaryYear}-${String(S.summaryMonth+1).padStart(2,'0')}.xlsx`);
+  showToast('Exported!');
+}
+
+function exportBillsXLSX() {
+  const monthEntries = S.entries.filter(e=>{
+    const d=new Date(e.date); return d.getFullYear()===S.billsYear && d.getMonth()===S.billsMonth;
+  });
+  if(!monthEntries.length){showToast('Nothing to export');return;}
+  let totalSpend=0,totalCB=0;
+  const rows=[['Date','Category','Card','Amount ($)','Rate','Cashback ($)']];
+  monthEntries.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    const cat=CATS.find(c=>c.id===e.catId);
+    const card=CARDS.find(c=>c.id===e.cardId);
+    const rv=cat?getRateFor(cat,e.cardId):{};
+    const cb=cat?(calcCashback(rv,e.amount)||0):0;
+    rows.push([e.date,cat?.label||e.catId,card?.short||e.cardId,e.amount,rv.label||'',+cb.toFixed(4)]);
+    totalSpend+=e.amount; totalCB+=cb;
+  });
+  rows.push([]); rows.push(['Total Spend','','',+totalSpend.toFixed(2)]); rows.push(['Total Cashback','','','','',+totalCB.toFixed(4)]);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:12},{wch:26},{wch:16},{wch:12},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,`${MONTHS[S.billsMonth]} ${S.billsYear}`);
+  XLSX.writeFile(wb,`bills_${S.billsYear}-${String(S.billsMonth+1).padStart(2,'0')}.xlsx`);
+  showToast('Exported!');
+}
+
+// ── RATES TAB ─────────────────────────────────────────────────────────────────
+function renderRates() {
+  const RATE_COLS=[
+    {key:'ocbc365',short:'OCBC',accent:'#d6232a'},
+    {key:'uobEvol',short:'Evol',accent:'#1a4fa0'},
+    {key:'uobAmex',short:'Amex',accent:'#007b5e'},
+    {key:'uobKF',  short:'KF',  accent:'#2563eb'},
+    {key:'citiPM', short:'PM',  accent:'#003b70'},
+  ];
+  const mainGroups=GROUPS.filter(g=>g.id!=='shopback');
+  const visGroups=S.ratesGroup?mainGroups.filter(g=>g.id===S.ratesGroup):mainGroups;
+
+  const filterChips=`<div class="filter-bar">
+    <button class="filter-chip ${!S.ratesGroup?'active':''}" onclick="S.ratesGroup=null;render()">All</button>
+    ${mainGroups.map(g=>`<button class="filter-chip ${S.ratesGroup===g.id?'active':''}" onclick="S.ratesGroup='${g.id}';render()">${g.icon} ${g.label}</button>`).join('')}
+  </div>`;
+
+  let tableRows='';
+  visGroups.forEach(g=>{
+    const cats=CATS.filter(c=>c.group===g.id);
+    tableRows+=`<tr><td colspan="${RATE_COLS.length+2}" class="group-hdr"><span class="group-hdr-txt">${g.icon}  ${g.label.toUpperCase()}</span></td></tr>`;
+    cats.forEach((cat,i)=>{
+      const vals=RATE_COLS.map(col=>{
+        const rv=cat.rates[col.key]||{};
+        return getEffVal(rv);
+      });
+      const maxVal=Math.max(...vals);
+      let cells=RATE_COLS.map((col,ci)=>{
+        const rv=cat.rates[col.key]||{};
+        const isExcl=rv.f==='excl'||rv.pct===0;
+        const isBest=maxVal>0&&vals[ci]===maxVal;
+        if(isExcl) return `<td><span class="excl-txt">—</span></td>`;
+        if(isBest) return `<td><span class="best-pill">${escHtml(rv.label||'')}</span></td>`;
+        const isLow=(rv.pct||0)<=0.003;
+        return `<td><span class="${isLow?'low-txt':''}">${escHtml(rv.label||'')}</span></td>`;
+      }).join('');
+      const counts=!NO_MIN_SPEND.uobOne.has(cat.id);
+      cells+=`<td style="color:${counts?'var(--green)':'var(--label3)'}">${counts?'✓':'✗'}</td>`;
+      tableRows+=`<tr><td class="cat-col"><div class="cat-lbl">${cat.icon} ${escHtml(cat.label)}</div><div class="cat-mcc">${escHtml(cat.mcc)}</div></td>${cells}</tr>`;
+    });
+  });
+
+  return `${filterChips}
+  <div class="rates-wrap">
+    <table class="rates-table">
+      <thead><tr>
+        <th class="cat-col">Category</th>
+        ${RATE_COLS.map(c=>`<th style="color:${c.accent};border-bottom:2px solid ${c.accent}">${c.short}</th>`).join('')}
+        <th style="color:#0070ba;border-bottom:2px solid #0070ba;font-size:10px">ONE<br>$500</th>
+      </tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  </div>
+  <div style="display:flex;gap:16px;padding:10px 16px;background:var(--card);border-top:0.5px solid var(--sep)">
+    <span style="font-size:11px;font-weight:500;color:var(--green)">● Best rate</span>
+    <span style="font-size:11px;font-weight:500;color:var(--label3)">— Excluded</span>
+    <span style="font-size:11px;font-weight:500;color:var(--label2)">● Low rate</span>
+    <span style="font-size:11px;font-weight:500;color:#0070ba">ONE $500: ✓/✗</span>
+  </div>`;
+}
+
+// ── ACCOUNTS TAB (yearly rollup, ported from native AccountSummaryScreen) ────
+function monthStatsFor(accId, y, m) {
+  const setup = S.bankSetup[accId]||{isSetup:false,initBal:0,initDate:''};
+  const daily = S.bankDaily[accId]||{};
+  if(!setup.isSetup || !setup.initDate) return null;
+  const initDate = setup.initDate;
+  const days = daysInMonth(y,m);
+  let bal = setup.initBal||0;
+  // walk from initDate up to start of this month to establish opening balance
+  const monthStartYM = `${y}-${String(m+1).padStart(2,'0')}`;
+  if(initDate.slice(0,7) < monthStartYM) {
+    Object.entries(daily).forEach(([date,rows])=>{
+      if(date>=initDate && date.slice(0,7)<monthStartYM) {
+        rows.forEach(r=>{ bal+=r.in||0; bal-=r.out||0; });
+      }
+    });
+  } else if(initDate.slice(0,7) > monthStartYM) {
+    return null; // account didn't exist yet this month
+  }
+  let totalIn=0, totalOut=0, balances=[];
+  let hasAnyDay=false;
+  for(let d=1; d<=days; d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(ds<initDate) continue;
+    hasAnyDay=true;
+    const rows=daily[ds]||[];
+    const dayIn=rows.reduce((s,r)=>s+(r.in||0),0);
+    const dayOut=rows.reduce((s,r)=>s+(r.out||0),0);
+    bal+=dayIn; bal-=dayOut;
+    totalIn+=dayIn; totalOut+=dayOut;
+    balances.push(bal);
+  }
+  if(!hasAnyDay) return null;
+  const avgBal = balances.reduce((s,v)=>s+v,0)/balances.length;
+  return {totalIn, totalOut, avgBal};
+}
+
+function renderAccounts() {
+  const accId = S.accountsAccount;
+  const year = S.accountsYear;
+  const setup = S.bankSetup[accId]||{isSetup:false};
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const isCurYear = year===now.getFullYear();
+
+  if(!setup.isSetup) {
+    const label = BANK_ACCOUNTS.find(a=>a.id===accId)?.label||accId;
+    return `<div class="empty" style="padding-top:60px">
+      <div style="font-size:48px;margin-bottom:16px">🏦</div>
+      <div class="empty-title">${label} not set up</div>
+      <div style="font-size:14px;color:var(--label2)">Set up this account in the Monthly tab first.</div>
+    </div>`;
+  }
+
+  const monthlyStats = MONTHS.map((_,i)=>monthStatsFor(accId,year,i));
+  const ytd = monthlyStats.reduce((acc,s,i)=>{
+    if(!s || (isCurYear && i>thisMonth)) return acc;
+    acc.totalIn+=s.totalIn; acc.totalOut+=s.totalOut; acc.balSum+=s.avgBal; acc.balCount++;
+    return acc;
+  }, {totalIn:0,totalOut:0,balSum:0,balCount:0});
+  const ytdAvg = ytd.balCount ? ytd.balSum/ytd.balCount : 0;
+  const maxAvg = Math.max(1, ...monthlyStats.filter(Boolean).map(s=>s.avgBal));
+
+  const ytdCard = `<div class="section" style="margin-top:0">
+    <div class="section-title">${isCurYear?'Year to Date':'Full Year '+year}</div>
+    <div style="display:flex;align-items:center">
+      <div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--label2);margin-bottom:4px">Total In</div><div style="font-size:18px;font-weight:700;color:var(--green)">$${fmtN(ytd.totalIn)}</div></div>
+      <div style="width:0.5px;height:36px;background:var(--sep)"></div>
+      <div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--label2);margin-bottom:4px">Total Out</div><div style="font-size:18px;font-weight:700;color:var(--red)">$${fmtN(ytd.totalOut)}</div></div>
+      <div style="width:0.5px;height:36px;background:var(--sep)"></div>
+      <div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--label2);margin-bottom:4px">Avg Balance</div><div style="font-size:18px;font-weight:700">$${fmtN(ytdAvg)}</div></div>
+    </div>
+  </div>`;
+
+  const rowsHtml = MONTHS.map((name,i)=>{
+    const isFuture = isCurYear && i>thisMonth;
+    if(isFuture) return '';
+    const s = monthlyStats[i];
+    const isCurrent = isCurYear && i===thisMonth;
+    return `<div style="display:flex;align-items:center;padding:10px 0;border-top:0.5px solid var(--sep);${isCurrent?'background:'+`color-mix(in srgb, var(--blue) 8%, transparent)`+';':''}">
+      <div style="width:64px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:13px;font-weight:${isCurrent?'700':'500'};color:${isCurrent?'var(--blue)':'var(--label)'}">${name}</span>
+        ${isCurrent?'<span style="width:6px;height:6px;border-radius:3px;background:var(--blue)"></span>':''}
+      </div>
+      ${s?`<div style="flex:1;font-size:12px;text-align:right;color:var(--green)">${s.totalIn>0?fmtN(s.totalIn):''}</div>
+      <div style="flex:1;font-size:12px;text-align:right;color:var(--red)">${s.totalOut>0?fmtN(s.totalOut):''}</div>
+      <div style="flex:1.4;padding-left:8px">
+        <div style="font-size:12px;text-align:right;margin-bottom:3px">${fmtN(s.avgBal)}</div>
+        <div style="height:4px;background:var(--fill);border-radius:2px"><div style="height:4px;border-radius:2px;width:${Math.min(s.avgBal/maxAvg,1)*100}%;background:${isCurrent?'var(--blue)':'var(--label3)'}"></div></div>
+      </div>`:`<div style="flex:3;font-size:12px;color:var(--label3);text-align:right">No data</div>`}
+    </div>`;
+  }).join('');
+
+  return `${ytdCard}
+  <div class="section">
+    <div style="display:flex;border-bottom:1px solid var(--sep);padding-bottom:6px;margin-bottom:2px">
+      <div style="width:64px;font-size:11px;font-weight:700;color:var(--label2);text-transform:uppercase">Month</div>
+      <div style="flex:1;font-size:11px;font-weight:700;color:var(--label2);text-align:right">In</div>
+      <div style="flex:1;font-size:11px;font-weight:700;color:var(--label2);text-align:right">Out</div>
+      <div style="flex:1.4;font-size:11px;font-weight:700;color:var(--label2);text-align:right;padding-left:8px">Avg Bal</div>
+    </div>
+    ${rowsHtml}
+  </div>`;
+}
+
+
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const WEEKENDS = [0,6];
+
+function buildMonthRows(y, m, initBal, initDate, daily) {
+  // m is 0-indexed here (matches webapp convention elsewhere)
+  if(!initDate) return [];
+  const mStart = `${y}-${String(m+1).padStart(2,'0')}-01`;
+  const nextM = m===11 ? `${y+1}-01-01` : `${y}-${String(m+2).padStart(2,'0')}-01`;
+  const from = initDate > mStart ? initDate : mStart;
+  const to = addDaysStr(nextM, -1); // show full month regardless of today
+  if(from > to) return [];
+  let bal = from <= initDate ? initBal : eodBal(addDaysStr(from,-1), initBal, initDate, daily);
+  const rows = [];
+  let cur = from;
+  while(cur <= to) {
+    const entries = daily[cur] || [];
+    const dayIn = entries.reduce((s,e)=>s+(e.in||0),0);
+    const dayOut = entries.reduce((s,e)=>s+(e.out||0),0);
+    bal += dayIn - dayOut;
+    rows.push({date:cur, bal, totalIn:dayIn, totalOut:dayOut, entries});
+    cur = addDaysStr(cur, 1);
+  }
+  return rows;
+}
+function addDaysStr(ds, n) {
+  const d = new Date(ds+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function eodBal(date, initBal, initDate, daily) {
+  if(!initDate || date<initDate) return initBal;
+  let bal=initBal, cur=initDate;
+  while(cur<=date) {
+    const entries = daily[cur]||[];
+    bal += entries.reduce((s,e)=>s+(e.in||0),0) - entries.reduce((s,e)=>s+(e.out||0),0);
+    cur = addDaysStr(cur,1);
+  }
+  return bal;
+}
+function openBalFor(date, initBal, initDate, daily) {
+  if(!initDate || date<=initDate) return initBal;
+  return eodBal(addDaysStr(date,-1), initBal, initDate, daily);
+}
+
+function renderMonthly() {
+  const accId = S.monthlyAccount;
+  const setup = S.bankSetup[accId]||{isSetup:false,initBal:0,initDate:''};
+  const daily = S.bankDaily[accId]||{};
+  const y=S.monthlyYear, m=S.monthlyMonth;
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  if(!setup.isSetup) {
+    return {top:'', bottom:'', scroll:`<div class="empty" style="padding-top:60px">
+      <div style="font-size:48px;margin-bottom:16px">🏦</div>
+      <div class="empty-title">Set up ${BANK_ACCOUNTS.find(a=>a.id===accId)?.label}</div>
+      <div style="font-size:14px;color:var(--label2);text-align:center;padding:0 32px;margin-bottom:24px">Enter opening balance and start date to begin tracking.</div>
+      <button class="save-btn" style="width:auto;padding:12px 24px" onclick="openSetupSheet()">Get Started</button>
+    </div>`};
+  }
+
+  const rows = buildMonthRows(y, m, setup.initBal, setup.initDate, daily);
+  const totalIn = rows.reduce((a,r)=>a+r.totalIn,0);
+  const totalOut = rows.reduce((a,r)=>a+r.totalOut,0);
+  const avgBal = rows.length ? rows.reduce((a,r)=>a+r.bal,0)/rows.length : 0;
+
+  const prevM = m===0 ? 11 : m-1;
+  const prevY = m===0 ? y-1 : y;
+  const prevRows = buildMonthRows(prevY, prevM, setup.initBal, setup.initDate, daily);
+  const prevAvg = prevRows.length ? prevRows.reduce((a,r)=>a+r.bal,0)/prevRows.length : null;
+  const change = prevAvg!==null ? avgBal-prevAvg : null;
+
+  if(rows.length===0) {
+    return {top:'', bottom:'', scroll:`<div class="empty" style="padding-top:60px">
+      <div style="font-size:48px;margin-bottom:12px">📅</div>
+      <div class="empty-title">No data this month</div>
+      <div style="font-size:14px;color:var(--label2)">Tap any day row to add entries</div>
+    </div>`};
+  }
+
+  const displayRows = [...rows].reverse(); // newest first
+  const rowsHtml = displayRows.map(r=>{
+    const d = new Date(r.date+'T00:00:00');
+    const dd = d.getDate();
+    const dow = DOW[d.getDay()];
+    const isToday = r.date===todayStr;
+    const isWeekend = WEEKENDS.includes(d.getDay());
+    const remarks = (r.entries||[]).map(e=>e.remark).filter(Boolean);
+    const rmkText = remarks.length===1 ? remarks[0] : remarks.length>1 ? `${remarks[0]} +${remarks.length-1}` : (r.entries.length>1 ? `${r.entries.length} entries` : '');
+    return `<div class="monthly-row" style="background:${isToday?'color-mix(in srgb, var(--blue) 10%, transparent)':isWeekend?'var(--fill)':'transparent'};padding:10px 0" onclick="openDaySheet('${r.date}')">
+      <div class="monthly-date" style="width:44px">
+        <div style="color:${isToday?'var(--blue)':'var(--label)'}">${dd}</div>
+        <div style="font-size:10px;font-weight:400;color:${isWeekend?'var(--red)':'var(--label2)'}">${dow}</div>
+      </div>
+      <div class="monthly-bal" style="font-weight:${isToday?'700':'600'}">${fmtN(r.bal)}</div>
+      <div class="monthly-in">${r.totalIn>0?fmtN(r.totalIn):''}</div>
+      <div class="monthly-out">${r.totalOut>0?fmtN(r.totalOut):''}</div>
+      <div class="monthly-remark" style="width:auto;flex:1">${escHtml(rmkText)}</div>
+    </div>`;
+  }).join('');
+
+  const openingRow = `<div class="monthly-row" style="background:var(--fill);padding:10px 0">
+    <div style="flex:1;font-size:12px;color:var(--label2)">Opening</div>
+    <div style="font-size:13px;font-weight:600">${fmtN(rows[0].bal-rows[0].totalIn+rows[0].totalOut)}</div>
+  </div>`;
+
+  const statsHtml=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:12px 16px;background:var(--card);border-top:0.5px solid var(--sep)">
+    <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:var(--green)">+${fmtN(totalIn)}</div><div style="font-size:11px;color:var(--label2)">Total In</div></div>
+    <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:var(--red)">-${fmtN(totalOut)}</div><div style="font-size:11px;color:var(--label2)">Total Out</div></div>
+    <div style="text-align:center"><div style="font-size:13px;font-weight:700">${fmtN(avgBal)}</div><div style="font-size:11px;color:var(--label2)">Avg Balance</div></div>
+    <div style="text-align:center"><div style="font-size:13px;font-weight:700;color:${change===null?'var(--label2)':change>=500?'var(--green)':'var(--red)'}">${change===null?'—':`${change>=0?'+':''}${fmtN(change)}`}</div><div style="font-size:11px;color:var(--label2)">vs Last Month</div></div>
+  </div>`;
+
+  const hdr=`<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;background:var(--card);border-bottom:0.5px solid var(--sep)">
+    <div style="font-size:12px;font-weight:600;color:var(--label2);width:44px">Day</div>
+    <div style="font-size:12px;font-weight:600;color:var(--label2);flex:1;text-align:right">Balance</div>
+    <div style="font-size:12px;font-weight:600;color:var(--green);width:70px;text-align:right">In</div>
+    <div style="font-size:12px;font-weight:600;color:var(--red);width:70px;text-align:right">Out</div>
+    <div style="font-size:12px;font-weight:600;color:var(--label2);flex:1">Remark</div>
+  </div>`;
+
+  return {top:hdr, bottom:statsHtml, scroll:`<div class="section" style="margin-top:0;padding:0 16px">${rowsHtml}${openingRow}</div>`};
+}
+
+window.openDaySheet = function(ds) {
+  const accId=S.monthlyAccount;
+  let rows=[...(S.bankDaily[accId]?.[ds]||[{in:0,out:0,remark:''}])];
+  if(rows.length===0) rows=[{in:'',out:'',remark:''}];
+
+  function buildDS() {
+    return `<div class="sheet-pill"></div>
+    <div class="sheet-hd">
+      <div class="sheet-title">${ds}</div>
+      <button class="close-btn" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      ${rows.map((r,i)=>`<div style="background:var(--fill);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div><div class="field-label" style="margin-top:0">In ($)</div>
+            <input class="field-input" type="text" inputmode="decimal" pattern="[0-9]*\.?[0-9]*" placeholder="0" value="${r.in||''}" oninput="window._ds.setIn(${i},this.value)"></div>
+          <div><div class="field-label" style="margin-top:0">Out ($)</div>
+            <input class="field-input" type="text" inputmode="decimal" pattern="[0-9]*\.?[0-9]*" placeholder="0" value="${r.out||''}" oninput="window._ds.setOut(${i},this.value)"></div>
+        </div>
+        <div class="field-label" style="margin-top:0">Remark</div>
+        <input class="field-input" placeholder="e.g. Salary, Rent…" value="${escHtml(r.remark||'')}" oninput="window._ds.setRemark(${i},this.value)">
+        ${rows.length>1?`<button onclick="window._ds.removeRow(${i})" style="color:var(--red);background:none;border:none;cursor:pointer;font-size:13px;margin-top:8px">✕ Remove</button>`:''}
+      </div>`).join('')}
+      <button onclick="window._ds.addRow()" style="color:var(--blue);background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;padding:8px 0">+ Add Row</button>
+      <button class="save-btn" onclick="window._ds.save()">Save</button>
+      <button onclick="window._ds.clear()" class="danger-btn" style="margin-top:8px">Clear Day</button>
+    </div>`;
+  }
+
+  window._ds = {
+    setIn(i,v){rows[i].in=parseFloat(v)||0;},
+    setOut(i,v){rows[i].out=parseFloat(v)||0;},
+    setRemark(i,v){rows[i].remark=v;},
+    addRow(){rows.push({in:'',out:'',remark:''});refreshDS();},
+    removeRow(i){rows.splice(i,1);refreshDS();},
+    async save(){
+      const clean=rows.filter(r=>(r.in||0)>0||(r.out||0)>0||r.remark);
+      if(!S.bankDaily[accId]) S.bankDaily[accId]={};
+      const dayNonWorking = isNonWorkingDay(ds);
+      const staying=[], shifted=[];
+      clean.forEach(r=>{
+        if(dayNonWorking && (r.in||0)>0) shifted.push(r); else staying.push(r);
+      });
+      if(staying.length===0) delete S.bankDaily[accId][ds];
+      else S.bankDaily[accId][ds]=staying;
+      if(shifted.length>0) {
+        const targetDate = nextWorkingDayStr(ds);
+        const reason = shiftReasonLabel(ds);
+        const moved = shifted.map(r=>({...r, remark: r.remark ? `${r.remark} (moved from ${reason})` : `Moved from ${reason}`}));
+        const existing = S.bankDaily[accId][targetDate]||[];
+        S.bankDaily[accId][targetDate] = [...existing, ...moved];
+      }
+      await saveDailyData(accId, S.bankDaily[accId]);
+      closeSheet();
+      const scrollEl=document.querySelector('.frozen-scroll');
+      const scrollTop=scrollEl?scrollEl.scrollTop:0;
+      renderTab();
+      const newScrollEl=document.querySelector('.frozen-scroll');
+      if(newScrollEl) newScrollEl.scrollTop=scrollTop;
+      showToast(shifted.length>0?`Saved (${shifted.length} IN entry moved to next working day)`:'Saved');
+    },
+    async clear(){
+      if(!confirm('Clear all entries for this day?')) return;
+      if(S.bankDaily[accId]) delete S.bankDaily[accId][ds];
+      await saveDailyData(accId, S.bankDaily[accId]||{});
+      closeSheet();
+      const scrollEl=document.querySelector('.frozen-scroll');
+      const scrollTop=scrollEl?scrollEl.scrollTop:0;
+      renderTab();
+      const newScrollEl=document.querySelector('.frozen-scroll');
+      if(newScrollEl) newScrollEl.scrollTop=scrollTop;
+      showToast('Cleared');
+    }
+  };
+  function refreshDS(){const w=document.querySelector('#sheet-wrap .sheet');if(w)w.innerHTML=buildDS();}
+  openSheet(buildDS());
+};
+
+window.openSetupSheet = async function() {
+  const accId=S.monthlyAccount;
+  const setup=S.bankSetup[accId]||{isSetup:false,initBal:0,initDate:''};
+  let bal=String(setup.initBal||'');
+  let date=setup.initDate||today();
+
+  function buildSS(){
+    return `<div class="sheet-pill"></div>
+    <div class="sheet-hd"><div class="sheet-title">Setup Account</div><button class="close-btn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-body">
+      <div style="color:var(--label2);font-size:14px;margin-bottom:14px">Set your opening balance and the date it applies from.</div>
+      <div class="field-label">Opening Balance ($)</div>
+      <input class="field-input" style="margin-bottom:12px" type="number" step="0.01" placeholder="e.g. 5000.00" value="${bal}" oninput="window._ss.setBal(this.value)">
+      <div class="field-label">From Date</div>
+      <input class="field-input" style="margin-bottom:16px" type="date" value="${date}" oninput="window._ss.setDate(this.value)">
+      <button class="save-btn" onclick="window._ss.save()">Save Setup</button>
+    </div>`;
+  }
+  window._ss={
+    setBal(v){bal=v;},
+    setDate(v){date=v;},
+    async save(){
+      const s={isSetup:true,initBal:parseFloat(bal)||0,initDate:date};
+      S.bankSetup[accId]=s;
+      await saveBankSetup(accId,s);
+      closeSheet(); renderTab(); showToast('Setup saved');
+    }
+  };
+  openSheet(buildSS());
+};
+
+// ── INSURANCE TAB ─────────────────────────────────────────────────────────────
+function renderInsurance() {
+  const yearIns = S.insurance.filter(e=>e.year===S.insYear);
+  const cashTotal = yearIns.filter(e=>e.category!=='medical_cpf').reduce((s,e)=>s+e.amount,0);
+  const cpfTotal  = yearIns.filter(e=>e.category==='medical_cpf').reduce((s,e)=>s+e.amount,0);
+
+  // Monthly accordion
+  const byMonth={};
+  yearIns.forEach(e=>{ if(!byMonth[e.month]) byMonth[e.month]=[]; byMonth[e.month].push(e); });
+  const expandedMonths = window._insExpandedMonths||{};
+
+  let accordionHtml='';
+  for(let m=0;m<12;m++){
+    const entries=byMonth[m];
+    if(!entries||entries.length===0) continue;
+    const mTotal=entries.reduce((s,e)=>s+e.amount,0);
+    const mCash=entries.filter(e=>e.category!=='medical_cpf').reduce((s,e)=>s+e.amount,0);
+    const mCPF=entries.filter(e=>e.category==='medical_cpf').reduce((s,e)=>s+e.amount,0);
+    const isOpen=expandedMonths[m];
+    accordionHtml+=`<div class="acc-month">
+      <div class="acc-month-hd" onclick="toggleInsMonth(${m})">
+        <span class="acc-month-label">${MONTHS[m]}</span>
+        <span class="acc-month-total">${mCash>0?`Cash ${fmt(mCash)}`:''}${mCash>0&&mCPF>0?' + ':''}${mCPF>0?`CPF ${fmt(mCPF)}`:''}${mCash===0&&mCPF===0?fmt(mTotal):''} ${isOpen?'▲':'▼'}</span>
+      </div>
+      ${isOpen?`<div class="acc-month-body">${entries.map(e=>{
+        const card=CARDS.find(c=>c.id===e.cardId);
+        return `<div class="ins-row" onclick="openEditIns('${e.id}')" oncontextmenu="event.preventDefault();deleteInsConfirm('${e.id}')">
+          <div class="ins-person">${INS_PERSONS[e.person]||e.person}</div>
+          <div class="ins-info">
+            <div class="ins-cat">${INS_CATS[e.category]||e.category}</div>
+            <div class="ins-note">${escHtml(e.note)}</div>
+            ${card?`<div class="ins-card">${card.short}</div>`:'<div class="ins-card ins-cpf">CPF</div>'}
+          </div>
+          <div class="ins-amt ${e.category==='medical_cpf'?'ins-cpf':''}">${fmt(e.amount)}</div>
+        </div>`;
+      }).join('')}</div>`:''}
+    </div>`;
+  }
+
+  // Summary table
+  const persons=['xj','jx','jackson','jayden'];
+  const catKeys=['medical_cpf','medical_rider','life','life_extra','saving'];
+  let tableHtml=`<table class="ins-table">
+    <thead><tr><th>Category</th>${persons.map(p=>`<th>${INS_PERSONS[p]}</th>`).join('')}<th>Total</th></tr></thead>
+    <tbody>`;
+  catKeys.forEach(cat=>{
+    const rowTotals=persons.map(p=>yearIns.filter(e=>e.category===cat&&e.person===p).reduce((s,e)=>s+e.amount,0));
+    const rowTotal=rowTotals.reduce((s,v)=>s+v,0);
+    if(rowTotal===0) return;
+    tableHtml+=`<tr><td>${INS_CATS[cat]}</td>${rowTotals.map(v=>`<td>${v>0?fmt(v):''}</td>`).join('')}<td style="font-weight:700">${fmt(rowTotal)}</td></tr>`;
+  });
+  tableHtml+=`<tr style="font-weight:700;border-top:1px solid var(--sep)"><td>Total</td>${persons.map(p=>{
+    const t=yearIns.filter(e=>e.person===p).reduce((s,e)=>s+e.amount,0);
+    return `<td>${t>0?fmt(t):''}</td>`;
+  }).join('')}<td>${fmt(yearIns.reduce((s,e)=>s+e.amount,0))}</td></tr>`;
+  tableHtml+=`</tbody></table>`;
+
+  return `<div class="stat-row">
+    <div class="stat-card"><div class="stat-label">Cash</div><div class="stat-val">${fmt(cashTotal)}</div></div>
+    <div class="stat-card"><div class="stat-label">CPF</div><div class="stat-val" style="color:var(--orange)">${fmt(cpfTotal)}</div></div>
+  </div>
+  <div style="background:var(--card);margin-bottom:12px">${accordionHtml||'<div class="empty" style="padding:40px 0"><div class="empty-icon">🛡️</div><div class="empty-title">No insurance entries</div><div class="empty-desc">Tap + to add</div></div>'}</div>
+  <div class="section" style="margin-bottom:80px;overflow-x:auto"><div class="section-title">Summary</div>${tableHtml}</div>`;
+}
+
+window.toggleInsMonth=function(m){
+  if(!window._insExpandedMonths) window._insExpandedMonths={};
+  window._insExpandedMonths[m]=!window._insExpandedMonths[m];
+  renderTab();
+};
+
+window.deleteInsConfirm=async function(id){
+  if(!confirm('Remove this insurance entry?')) return;
+  S.insurance=S.insurance.filter(e=>e.id!==id);
+  await deleteInsuranceEntry(id);
+  renderTab(); showToast('Deleted');
+};
+
+window.openAddIns=function(){openInsSheet(null);};
+window.openEditIns=function(id){const e=S.insurance.find(x=>x.id===id);if(e)openInsSheet(e);};
+
+function openInsSheet(editEntry) {
+  const isEdit=!!editEntry;
+  let person=editEntry?.person||'xj';
+  let category=editEntry?.category||'medical_cpf';
+  let year=editEntry?.year||S.insYear;
+  let month=editEntry!=null?editEntry.month:new Date().getMonth();
+  let day=editEntry?.day||null;
+  let cardId=editEntry?.cardId||null;
+  let amount=editEntry?String(editEntry.amount):'';
+  let note=editEntry?.note||'';
+
+  function buildIS(){
+    const showCard=category!=='medical_cpf';
+    return `<div class="sheet-pill"></div>
+    <div class="sheet-hd">
+      <div class="sheet-title">${isEdit?'Edit Insurance':'Add Insurance'}</div>
+      <div style="display:flex;gap:12px;align-items:center">
+        ${isEdit?`<button class="del-btn" onclick="window._is.del()">Delete</button>`:''}
+        <button class="close-btn" onclick="closeSheet()">✕</button>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div class="field-label">Person</div>
+      <div class="chips-scroll">${Object.entries(INS_PERSONS).map(([k,v])=>`<button class="chip ${person===k?'active':''}" onclick="window._is.setPerson('${k}')">${v}</button>`).join('')}</div>
+      <div class="field-label">Category</div>
+      <div class="chips-scroll">${Object.entries(INS_CATS).map(([k,v])=>`<button class="chip ${category===k?'active':''}" onclick="window._is.setCat('${k}')">${v}</button>`).join('')}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><div class="field-label">Year</div><input class="field-input" type="number" value="${year}" oninput="window._is.setYear(this.value)"></div>
+        <div><div class="field-label">Month</div>
+          <select class="field-input" onchange="window._is.setMonth(this.value)">
+            ${MONTHS.map((mn,i)=>`<option value="${i}" ${month===i?'selected':''}>${mn}</option>`).join('')}
+          </select>
+        </div>
+        <div><div class="field-label">Day</div><input class="field-input" type="number" min="1" max="31" placeholder="—" value="${day||''}" oninput="window._is.setDay(this.value)"></div>
+      </div>
+      ${showCard?`<div class="field-label">Card</div>
+        <div class="chips-scroll">${INS_CARDS.map(c=>`<button class="chip ${cardId===c.id?'active':''}" onclick="window._is.setCard('${c.id}')">${c.name}</button>`).join('')}
+        <button class="chip ${!cardId?'active':''}" onclick="window._is.setCard(null)">CPF / None</button></div>`:''}
+      <div class="field-label">Amount ($)</div>
+      <input class="field-input" style="margin-bottom:8px" type="number" step="0.01" placeholder="e.g. 355.50" value="${amount}" oninput="window._is.setAmt(this.value)">
+      <div class="field-label">Note</div>
+      <input class="field-input" style="margin-bottom:4px" placeholder="e.g. PruExtra 3.23" value="${escHtml(note)}" oninput="window._is.setNote(this.value)">
+      <button class="save-btn" onclick="window._is.save()">${isEdit?'Update':'Save'}</button>
+    </div>`;
+  }
+
+  window._is={
+    setPerson(v){person=v;refreshIS();},
+    setCat(v){category=v;if(v==='medical_cpf')cardId=null;refreshIS();},
+    setYear(v){year=parseInt(v)||S.insYear;},
+    setMonth(v){month=parseInt(v);},
+    setDay(v){day=v?parseInt(v):null;},
+    setCard(v){cardId=v;},
+    setAmt(v){amount=v;},
+    setNote(v){note=v;},
+    del(){confirmDialog('Remove this insurance entry?',async()=>{S.insurance=S.insurance.filter(e=>e.id!==editEntry.id);await deleteInsuranceEntry(editEntry.id);closeSheet();renderTab();showToast('Deleted');});},
+    async save(){
+      const e={year,month,day,person,category,cardId:category==='medical_cpf'?null:cardId,amount:parseFloat(amount)||0,note};
+      if(isEdit){await updateInsuranceEntry(editEntry.id,e);S.insurance=S.insurance.map(x=>x.id===editEntry.id?{...x,...e}:x);await autoAddInsuranceToBills({...e,id:editEntry.id});showToast('Updated');}
+      else{const ne=await addInsuranceEntry({...e,id:`ins_${Date.now()}`});S.insurance=[...S.insurance,ne];await autoAddInsuranceToBills(ne);showToast('Saved');}
+      closeSheet();renderTab();
+    }
+  };
+  function refreshIS(){const w=document.querySelector('#sheet-wrap .sheet');if(w)w.innerHTML=buildIS();}
+  openSheet(buildIS());
+}
+
+// ── SETTINGS TAB ──────────────────────────────────────────────────────────────
+function isStandaloneApp() {
+  return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+}
+
+function renderSettings() {
+  const myCards=S.settings.myCards||[];
+  const standalone = isStandaloneApp();
+  const pushSupported = standalone && 'serviceWorker' in navigator && 'PushManager' in window;
+  const pushPermission = pushSupported ? Notification.permission : 'unsupported';
+  return `<div class="section" style="margin-top:0">
+    <div class="section-title">My Cards</div>
+    ${CARDS.map(card=>`<div class="settings-row">
+      <span class="settings-row-label" style="color:${card.accent}">${card.name}</span>
+      <div class="toggle-row" style="padding:0" onclick="toggleCard('${card.id}')">
+        <div class="toggle-track ${myCards.includes(card.id)?'on':''}"><div class="toggle-thumb"></div></div>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="section">
+    <div class="section-title">Notifications</div>
+    <div style="font-size:13px;color:var(--label2);margin-bottom:10px">
+      Weekly alert if either account's balance change vs last month drops below $500, or either OCBC card's monthly spend is below the $800 min-spend threshold.
+    </div>
+    ${!standalone
+      ? `<div style="font-size:13px;color:var(--label3)">Add this app to your Home Screen (Share → Add to Home Screen) to enable notifications — they're not available when opened in a regular browser tab.</div>`
+      : `<div id="push-status-area">${!pushSupported ? `<div style="font-size:13px;color:var(--label3)">Not supported on this browser/device.</div>` :
+          pushPermission === 'denied' ? `<div style="font-size:13px;color:var(--red)">Blocked — enable notifications for this site in your device Settings.</div>` :
+          `<div style="font-size:13px;color:var(--label3)">Checking status…</div>`
+        }</div>`
+    }
+  </div>
+  <div class="section">
+    <div class="section-title">About</div>
+    <div style="font-size:14px;color:var(--label2);line-height:1.6">
+      <div style="margin-bottom:8px"><b style="color:var(--label)">Rates last verified:</b> Jul 2026</div>
+      <div style="margin-bottom:8px"><b style="color:var(--label)">Cards covered:</b> OCBC 365, UOB EVOL, UOB Absolute Amex, UOB KrisFlyer, UOB ONE Debit, Citi PremierMiles</div>
+      <div style="margin-bottom:8px"><b style="color:var(--label)">Data storage:</b> Supabase cloud + local browser storage fallback</div>
+      <div><b style="color:var(--label)">Mile valuation:</b> 1.5¢/mile (KrisFlyer)</div>
+    </div>
+  </div>
+  <div class="section" style="margin-bottom:80px">
+    <div class="section-title" style="color:var(--red)">Danger Zone</div>
+    <button class="danger-btn" onclick="clearAllBills()">Clear All Bills Data</button>
+  </div>`;
+}
+
+async function refreshPushStatusArea() {
+  const area = document.getElementById('push-status-area');
+  if(!area) return;
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || Notification.permission === 'denied') return;
+  try {
+    let sub = null;
+    if(Notification.permission === 'granted') {
+      const reg = await navigator.serviceWorker.getRegistration('sw.js');
+      sub = reg ? await reg.pushManager.getSubscription() : null;
+    }
+    area.innerHTML = `<div class="settings-row">
+      <span class="settings-row-label">Weekly Alerts</span>
+      <div class="toggle-row" style="padding:0" onclick="togglePushNotifications(${sub?'true':'false'})">
+        <div class="toggle-track ${sub?'on':''}"><div class="toggle-thumb"></div></div>
+      </div>
+    </div>`;
+  } catch(err) {
+    console.warn('[push] status check failed', err);
+  }
+}
+
+window.togglePushNotifications = function(currentlyOn) {
+  if(currentlyOn) disablePushNotifications();
+  else enablePushNotifications();
+};
+
+window.openSettingsSheet=function(){
+  openSheet(`<div class="sheet-pill"></div>
+  <div class="sheet-hd">
+    <div class="sheet-title">Settings</div>
+    <button class="close-btn" onclick="closeSheet()">✕</button>
+  </div>
+  <div class="sheet-body" style="max-height:70dvh;overflow-y:auto">${renderSettings()}</div>`);
+  refreshPushStatusArea();
+};
+
+window.toggleCard=async function(cardId){
+  const myCards=[...S.settings.myCards];
+  const idx=myCards.indexOf(cardId);
+  if(idx>=0) myCards.splice(idx,1); else myCards.push(cardId);
+  S.settings={...S.settings,myCards};
+  await saveSettings(S.settings);
+  const body=document.querySelector('#sheet-wrap .sheet-body');
+  if(body) body.innerHTML=renderSettings();
+  else renderTab();
+};
+
+window.clearAllBills=async function(){
+  if(!confirm('Delete ALL bill entries? This cannot be undone.')) return;
+  S.entries=[];
+  lsSet('entries_v1',[]);
+  try { await db.rpc('rpc_clear_entries', {p_token:getToken()}); } catch(err){console.warn(err);}
+  render(); showToast('All bills cleared');
+};
+
+// ── PUSH NOTIFICATIONS ────────────────────────────────────────────────────────
+// VAPID public key is meant to be public (proves pushes come from this app);
+// the matching private key lives only in the send-push Edge Function's secrets.
+const VAPID_PUBLIC_KEY = 'BI1efZq1OS85b7_A9RIul6wUHa8HmgaZSuXXYc_6jg12nRVSO2gNIjDmXAepCGeLwjQ_ledDvjQL7Y6umXuhRy0';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+window.enablePushNotifications = async function() {
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Push notifications are not supported on this browser.');
+    return;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted') {
+      showToast('Notifications not enabled');
+      renderSettingsIfOpen();
+      return;
+    }
+    const reg = await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    const res = await fetch(SUPABASE_URL + '/functions/v1/save-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ token: getToken(), subscription: subscription.toJSON() }),
+    });
+    if(!res.ok) throw new Error('Server rejected subscription');
+    showToast('Notifications enabled');
+  } catch(err) {
+    console.warn('[push] enable failed', err);
+    alert('Could not enable notifications: ' + (err && err.message ? err.message : err));
+  }
+  renderSettingsIfOpen();
+};
+
+window.disablePushNotifications = async function() {
+  try {
+    const reg = await navigator.serviceWorker.getRegistration('sw.js');
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+    if(sub) {
+      const endpoint = sub.endpoint;
+      await sub.unsubscribe();
+      try {
+        await fetch(SUPABASE_URL + '/functions/v1/delete-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ token: getToken(), endpoint }),
+        });
+      } catch(err) { console.warn('[push] server-side unsubscribe failed', err); }
+    }
+    showToast('Notifications disabled');
+  } catch(err) {
+    console.warn('[push] disable failed', err);
+    alert('Could not disable notifications: ' + (err && err.message ? err.message : err));
+  }
+  refreshPushStatusArea();
+};
+
+function renderSettingsIfOpen() {
+  const body=document.querySelector('#sheet-wrap .sheet-body');
+  if(body) body.innerHTML=renderSettings();
+  refreshPushStatusArea();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+const TAB_DEFS = [
+  {id:'advisor',  icon:'🔍', label:'Advisor'},
+  {id:'bills',    icon:'💳', label:'Bills'},
+  {id:'monthly',  icon:'🏦', label:'Monthly'},
+  {id:'accounts', icon:'💰', label:'Accounts'},
+  {id:'summary',  icon:'📊', label:'Spending'},
+  {id:'rates',    icon:'📋', label:'Rates'},
+  {id:'insurance',icon:'🛡️', label:'Insurance'},
+];
+
+function renderTabBar() {
+  document.getElementById('tabbar').innerHTML = TAB_DEFS.map(t=>
+    `<button class="tab-btn ${S.tab===t.id?'active':''}" onclick="switchTab('${t.id}')">
+      <span class="tab-icon">${t.icon}</span>
+      <span class="tab-label">${t.label}</span>
+    </button>`
+  ).join('');
+}
+
+function getNavHtml() {
+  switch(S.tab) {
+    case 'bills':
+      return `<div class="nav" style="padding-top:max(12px,env(safe-area-inset-top))">
+        <button class="nav-arrow" onclick="changeMonth('bills',-1)">‹</button>
+        <span class="nav-title">${MONTHS[S.billsMonth]} ${S.billsYear}</span>
+        <button class="nav-arrow" onclick="changeMonth('bills',1)">›</button>
+        <button class="nav-btn" onclick="refreshEntriesData()">🔄</button>
+        <button class="nav-btn" onclick="exportBillsXLSX()">⬆ XLS</button>
+      </div>`;
+    case 'summary':
+      return `<div class="nav" style="padding-top:max(12px,env(safe-area-inset-top))">
+        <button class="nav-arrow" onclick="changeMonth('summary',-1)">‹</button>
+        <span class="nav-title">${MONTHS[S.summaryMonth]} ${S.summaryYear}</span>
+        <button class="nav-arrow" onclick="changeMonth('summary',1)">›</button>
+        <button class="nav-btn" onclick="refreshEntriesData()">🔄</button>
+        <button class="nav-btn" onclick="exportSummaryXLSX()">⬆ XLS</button>
+      </div>`;
+    case 'monthly':
+      const isAcctSetup = (S.bankSetup[S.monthlyAccount]||{}).isSetup;
+      return `<div class="nav" style="padding-top:max(12px,env(safe-area-inset-top))">
+        <button class="nav-arrow" onclick="changeMonth('monthly',-1)">‹</button>
+        <span class="nav-title">${MONTHS[S.monthlyMonth]} ${S.monthlyYear}</span>
+        <button class="nav-arrow" onclick="changeMonth('monthly',1)">›</button>
+        <button class="nav-btn" onclick="refreshMonthlyData()">🔄</button>
+        ${isAcctSetup ? '' : '<button class="nav-btn" onclick="openSetupSheet()">🏦</button>'}
+        <button class="nav-btn" onclick="exportMonthlyXLSX()">⬆ XLS</button>
+      </div>`;
+    case 'accounts':
+      return `<div class="nav" style="padding-top:max(12px,env(safe-area-inset-top))">
+        <button class="nav-arrow" onclick="S.accountsYear--;renderTab()">‹</button>
+        <span class="nav-title">${S.accountsYear}</span>
+        <button class="nav-arrow" ${S.accountsYear>=new Date().getFullYear()?'disabled':''} onclick="S.accountsYear++;renderTab()">›</button>
+        <button class="nav-btn" onclick="refreshMonthlyData()">🔄</button>
+      </div>`;
+    case 'insurance':
+      return `<div class="nav" style="padding-top:max(12px,env(safe-area-inset-top))">
+        <button class="nav-arrow" onclick="S.insYear--;renderTab()">‹</button>
+        <span class="nav-title">${S.insYear}</span>
+        <button class="nav-arrow" onclick="S.insYear++;renderTab()">›</button>
+        <button class="nav-btn" onclick="refreshInsuranceData()">🔄</button>
+        <button class="nav-btn" onclick="openAddIns()">+</button>
+      </div>`;
+    default: return `<div style="height:calc(env(safe-area-inset-top,0px) + 46px)"></div>`;
+  }
+}
+
+function getSegCtrlHtml() {
+  if(S.tab==='monthly') {
+    return `<div class="seg-ctrl">
+      ${BANK_ACCOUNTS.map(a=>`<button class="seg-btn ${S.monthlyAccount===a.id?'active':''}" onclick="switchAccount('${a.id}')">${a.label}</button>`).join('')}
+    </div>`;
+  }
+  if(S.tab==='accounts') {
+    return `<div class="seg-ctrl">
+      ${BANK_ACCOUNTS.map(a=>`<button class="seg-btn ${S.accountsAccount===a.id?'active':''}" onclick="S.accountsAccount='${a.id}';renderTab()">${a.label}</button>`).join('')}
+    </div>`;
+  }
+  return '';
+}
+
+function getFabHtml() {
+  if(S.tab==='bills') return `<button class="fab" onclick="openAddBill()">+</button>`;
+  if(S.tab==='insurance') return `<button class="fab" onclick="openAddIns()">+</button>`;
+  return '';
+}
+
+function renderTab() {
+  let html='';
+  switch(S.tab) {
+    case 'advisor':   html=renderAdvisor(); break;
+    case 'bills':     html=renderBills(); break;
+    case 'summary':   html=renderSummary(); break;
+    case 'monthly':   html=renderMonthly(); break;
+    case 'accounts':  html=renderAccounts(); break;
+    case 'rates':     html=renderRates(); break;
+    case 'insurance': html=renderInsurance(); break;
+  }
+  const nav=getNavHtml();
+  const seg=getSegCtrlHtml();
+  const fab=getFabHtml();
+  const contentEl=document.getElementById('content');
+  // Frozen layout on every tab: nav/seg (month-year or year selectors) pinned at top,
+  // only the tab's own body scrolls in the middle. Tabs with no nav (Advisor, Rates)
+  // just get an empty top strip, so their own internal header scrolls as part of the body.
+  let topExtra='', scrollHtml='', bottomHtml='';
+  if(html && typeof html==='object') {
+    topExtra = html.top||'';
+    scrollHtml = html.scroll||'';
+    bottomHtml = html.bottom||'';
+  } else {
+    scrollHtml = html;
+  }
+  contentEl.classList.add('frozen');
+  contentEl.innerHTML = `<div class="frozen-top">${nav}${seg}${topExtra}</div>`+
+    `<div class="frozen-scroll">${scrollHtml}</div>`+
+    (bottomHtml?`<div class="frozen-bottom">${bottomHtml}</div>`:'');
+  // Remove old FAB
+  document.querySelectorAll('.fab').forEach(el=>el.remove());
+  if(fab) document.getElementById('app').insertAdjacentHTML('beforeend',fab);
+}
+
+function render() {
+  renderTabBar();
+  renderTab();
+}
+
+window.refreshMonthlyData = async function() {
+  showToast('Refreshing…');
+  try {
+    for(const acc of BANK_ACCOUNTS) {
+      S.bankSetup[acc.id] = await loadBankSetup(acc.id);
+      S.bankDaily[acc.id] = await loadDailyData(acc.id);
+    }
+    renderTab();
+    showToast('Refreshed');
+  } catch(err) {
+    console.warn(err);
+    showToast('Refresh failed');
+  }
+};
+
+window.refreshEntriesData = async function() {
+  showToast('Refreshing…');
+  try {
+    S.entries = await loadEntries();
+    renderTab();
+    showToast('Refreshed');
+  } catch(err) {
+    console.warn(err);
+    showToast('Refresh failed');
+  }
+};
+
+window.refreshInsuranceData = async function() {
+  showToast('Refreshing…');
+  try {
+    S.insurance = await loadInsurance();
+    renderTab();
+    showToast('Refreshed');
+  } catch(err) {
+    console.warn(err);
+    showToast('Refresh failed');
+  }
+};
+
+window.switchTab = function(tab) {
+  S.tab=tab;
+  render();
+  document.getElementById('content').scrollTop=0;
+  if(tab==='monthly' && !(S.bankSetup[S.monthlyAccount]||{}).isSetup) openSetupSheet();
+};
+
+window.switchAccount = function(acc) {
+  S.monthlyAccount=acc;
+  renderTab();
+  if(!(S.bankSetup[acc]||{}).isSetup) openSetupSheet();
+};
+
+window.changeMonth = function(scope, dir) {
+  const yKey=scope+'Year', mKey=scope+'Month';
+  let m=S[mKey]+dir, y=S[yKey];
+  if(m<0){m=11;y--;} if(m>11){m=0;y++;}
+  S[mKey]=m; S[yKey]=y;
+  renderTab();
+};
+
+function exportMonthlyXLSX() {
+  const accId=S.monthlyAccount;
+  const setup=S.bankSetup[accId]||{};
+  const daily=S.bankDaily[accId]||{};
+  const y=S.monthlyYear,m=S.monthlyMonth;
+  const days=daysInMonth(y,m);
+  let bal=setup.initBal||0;
+  const rows=[['Date','Balance ($)','In ($)','Out ($)','Remark']];
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayRows=daily[ds]||[];
+    const dayIn=dayRows.reduce((s,r)=>s+(r.in||0),0);
+    const dayOut=dayRows.reduce((s,r)=>s+(r.out||0),0);
+    if(setup.initDate&&ds>=setup.initDate){bal+=dayIn;bal-=dayOut;}
+    const remark=dayRows.map(r=>r.remark).filter(Boolean).join(', ');
+    rows.push([ds,setup.initDate&&ds>=setup.initDate?+bal.toFixed(2):'',dayIn||'',dayOut||'',remark]);
+  }
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:12},{wch:12},{wch:10},{wch:10},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws,`${BANK_ACCOUNTS.find(a=>a.id===accId)?.label} ${MONTHS[m]} ${y}`);
+  XLSX.writeFile(wb,`monthly_${accId}_${y}-${String(m+1).padStart(2,'0')}.xlsx`);
+  showToast('Exported!');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  document.getElementById('content').innerHTML='<div class="loading">Loading…</div>';
+  renderTabBar();
+  try {
+    [S.entries, S.settings, S.insurance] = await Promise.all([loadEntries(), loadSettings(), loadInsurance()]);
+    for(const acc of BANK_ACCOUNTS) {
+      S.bankSetup[acc.id] = await loadBankSetup(acc.id);
+      S.bankDaily[acc.id] = await loadDailyData(acc.id);
+    }
+    await autoSeedYearlyInsurance();
+    await autoSyncAllInsuranceToBills();
+  } catch(e) { console.warn('Init error', e); }
+  render();
+  applyNotificationNavFromUrl();
+}
+
+// ── NOTIFICATION TAB ROUTING ───────────────────────────────────────────────────
+function applyNotificationNav(tab, account) {
+  if(!tab) return;
+  if(account && tab === 'monthly') S.monthlyAccount = account;
+  if(account && tab === 'accounts') S.accountsAccount = account;
+  switchTab(tab);
+}
+
+function applyNotificationNavFromUrl() {
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab');
+  const account = params.get('account');
+  if(tab) {
+    applyNotificationNav(tab, account);
+    history.replaceState({}, '', location.pathname); // don't keep forcing this tab on future reloads
+  }
+}
+
+// While the app is already open, a notification tap focuses this tab and
+// posts a message here instead of navigating a URL (see sw.js).
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if(event.data && event.data.type === 'navigate-tab') {
+      applyNotificationNav(event.data.tab, event.data.account);
+    }
+  });
+}
+
+// ── LOGIN TOKEN GATE ──────────────────────────────────────────────────────────
+async function validateLoginToken(token) {
+  if(!token) return false;
+  try {
+    const {data, error} = await db.rpc('validate_login_token', {p_token: token});
+    if(error) { console.warn('[login] validate error', error); return false; }
+    return data === true;
+  } catch(err) { console.warn('[login] validate failed', err); return false; }
+}
+
+function showLoginPrompt(errorMsg) {
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="login-overlay" class="login-overlay">
+      <div class="login-box">
+        <div style="font-size:40px;margin-bottom:12px">🔒</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px">Login Required</div>
+        <div style="font-size:13px;color:var(--label2);margin-bottom:16px;text-align:center">Enter your login token to continue</div>
+        <input id="login-token-input" class="field-input" type="text" placeholder="Login token" autocapitalize="off" autocorrect="off" spellcheck="false" style="margin-bottom:10px;width:100%" onkeydown="if(event.key==='Enter')submitLoginToken()">
+        <div id="login-error" style="color:var(--red);font-size:13px;margin-bottom:10px;display:${errorMsg?'block':'none'}">${errorMsg?escHtml(errorMsg):''}</div>
+        <button class="save-btn" style="width:100%" onclick="submitLoginToken()">Continue</button>
+      </div>
+    </div>`);
+  document.getElementById('login-token-input').focus();
+}
+
+window.submitLoginToken = async function() {
+  const input = document.getElementById('login-token-input');
+  const token = input.value.trim();
+  if(!token) return;
+  const btn = document.querySelector('#login-overlay .save-btn');
+  const errEl = document.getElementById('login-error');
+  btn.disabled = true; btn.textContent = 'Checking…'; errEl.style.display = 'none';
+  const valid = await validateLoginToken(token);
+  if(valid) {
+    localStorage.setItem('loginToken', token);
+    document.getElementById('login-overlay').remove();
+    init();
+  } else {
+    btn.disabled = false; btn.textContent = 'Continue';
+    errEl.textContent = 'Invalid token. Please try again.';
+    errEl.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
+};
+
+async function bootWithAuth() {
+  const stored = localStorage.getItem('loginToken');
+  if(stored) {
+    const valid = await validateLoginToken(stored);
+    if(valid) { init(); return; }
+    localStorage.removeItem('loginToken');
+    showLoginPrompt('Your login token is no longer valid. Please enter a new one.');
+    return;
+  }
+  showLoginPrompt();
+}
+
+bootWithAuth();
+</script>
+</body>
+</html>
