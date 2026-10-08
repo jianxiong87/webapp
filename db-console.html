@@ -158,8 +158,10 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 /* ---------- config ---------- */
-const SUPABASE_URL = 'https://zppigksbqpfdmtxgswiz.supabase.co';
-const ANON_KEY     = 'PASTE_YOUR_ANON_KEY_HERE';   // swap in the same (obfuscated) anon key you use in sgcashback
+// Same reverse+base64 obfuscation as sgcashback (bot deterrent only, not encryption)
+function _deobf(s) { return atob(s).split('').reverse().join(''); }
+const SUPABASE_URL = _deobf('b2MuZXNhYmFwdXMueml3c2d4dG1kZnBxYnNrZ2lwcHovLzpzcHR0aA==');
+const ANON_KEY     = _deobf('UVZyWjItQ003WjEzc0NCeHNWYXViUFVXNGVGak1QWTdfUV9yV3N4clZHUy4wM04yUVRPNVlUTzVBak02SUNjNFZtSXNjak4wTWpNeFFETzNFak9pUVhZcEpDTGk0MmJ1Rm1JNklTWnM5bWNpd2lJNmwyZHpkR2UwMUdabUJYY2lOM2FubEdjd3BuSTZJaVpsSm5Jc0lTWnpGbVloQlhkekppT2lNM2NwSnllLjlKQ1ZYcGtJNklDYzVSbklzSWlOMUl6VUlKaU9pY0diaEp5ZQ==');
 const RPC          = 'rpc_admin_sql';
 const PAGE = 50, TK = 'dbx_token', HK = 'dbx_hist';
 
