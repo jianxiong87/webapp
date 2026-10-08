@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="营养追踪">
+<title>儿童营养追踪 v2.0</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+
+:root {
+  --bg:#f4f7fb; --surface:#fff; --border:#e2e8f3; --text:#1a2235; --muted:#6b7a99;
+  --kid1:#6366f1; --kid1-light:#eef2ff;
+  --kid2:#ec4899; --kid2-light:#fdf2f8;
+  --green:#16a34a; --green-bg:#dcfce7;
+  --yellow:#ca8a04; --yellow-bg:#fef9c3;
+  --red:#dc2626; --red-bg:#fee2e2;
+  --orange:#ea580c; --orange-bg:#ffedd5;
+  --tall:#0891b2; --tall-light:#ecfeff;
+  --radius:12px; --shadow:0 2px 12px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* TABS */
+.tab-bar{display:flex;background:var(--surface);border-bottom:2px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06);overflow-x:auto}
+.tab-btn{padding:13px 16px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap}
+.tab-btn.active{color:var(--kid1);border-bottom-color:var(--kid1)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* MODE BANNER */
+.mode-banner{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.mode-label{font-size:11px;font-weight:700;color:var(--muted)}
+.mode-btn{padding:5px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted)}
+.mode-btn.active-normal{background:var(--kid1);color:#fff;border-color:var(--kid1)}
+.mode-btn.active-tall{background:var(--tall);color:#fff;border-color:var(--tall)}
+.mode-info{font-size:10px;color:var(--muted);margin-left:auto}
+
+/* HEADER */
+.page-header{padding:16px 16px 0}
+.page-header h1{font-size:19px;font-weight:700}
+.page-header p{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* LAYOUT */
+.tracker-layout{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.tracker-layout{grid-template-columns:1fr}}
+
+.kid-panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.kid-header{padding:12px 14px 10px;display:flex;align-items:center;gap:10px}
+.kid-header.k1{background:var(--kid1-light);border-bottom:2px solid var(--kid1)}
+.kid-header.k2{background:var(--kid2-light);border-bottom:2px solid var(--kid2)}
+.kid-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.k1 .kid-dot{background:var(--kid1)} .k2 .kid-dot{background:var(--kid2)}
+.kid-name-input{font-size:14px;font-weight:700;border:none;background:transparent;color:var(--text);width:110px;outline:none}
+.kid-age-select{font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--muted);cursor:pointer;margin-top:3px;display:block}
+
+/* FOOD LOG */
+.food-log{padding:10px 14px}
+.section-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.entry-row{display:grid;grid-template-columns:1fr 65px 26px;gap:5px;align-items:center;margin-bottom:5px}
+.entry-row input,.entry-row select{border:1px solid var(--border);border-radius:7px;padding:5px 7px;font-size:10.5px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
+.entry-row input:focus,.entry-row select:focus{border-color:var(--kid1)}
+.k2-panel .entry-row input:focus,.k2-panel .entry-row select:focus{border-color:var(--kid2)}
+.del-btn{width:24px;height:24px;border-radius:6px;border:none;background:#fef2f2;color:#dc2626;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.del-btn:hover{background:#fee2e2}
+.add-btn{width:100%;padding:6px;border:1.5px dashed var(--border);border-radius:7px;background:none;color:var(--muted);font-size:10.5px;font-weight:600;cursor:pointer;margin-top:3px;transition:all .15s}
+.add-btn:hover{border-color:var(--kid1);color:var(--kid1);background:var(--kid1-light)}
+.k2-panel .add-btn:hover{border-color:var(--kid2);color:var(--kid2);background:var(--kid2-light)}
+
+/* QUICK GRID */
+.quick-grid{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.q-btn{padding:3px 8px;border-radius:16px;border:1px solid var(--border);background:var(--bg);font-size:9.5px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+.q-btn:hover{background:var(--kid1-light);border-color:var(--kid1);color:var(--kid1)}
+.k2-panel .q-btn:hover{background:var(--kid2-light);border-color:var(--kid2);color:var(--kid2)}
+
+/* CALC BTN */
+.calc-btn{width:100%;padding:10px;border-radius:0 0 var(--radius) var(--radius);border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.calc-btn.k1{background:var(--kid1);color:#fff} .calc-btn.k1:hover{background:#4f46e5}
+.calc-btn.k2{background:var(--kid2);color:#fff} .calc-btn.k2:hover{background:#db2777}
+
+/* RESULTS */
+.results-section{padding:12px 14px 14px;border-top:1px solid var(--border)}
+.summary-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.chip{padding:2px 8px;border-radius:16px;font-size:9.5px;font-weight:700}
+.chip.ok{background:var(--green-bg);color:var(--green)}
+.chip.low{background:var(--yellow-bg);color:var(--yellow)}
+.chip.vlow{background:var(--red-bg);color:var(--red)}
+.chip.over{background:var(--orange-bg);color:var(--orange)}
+.n-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.n-name{font-size:10px;font-weight:600;width:105px;flex-shrink:0}
+.n-bar-wrap{flex:1;height:7px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.n-bar{height:100%;border-radius:4px;transition:width .4s}
+.n-bar.ok{background:var(--green)} .n-bar.low{background:var(--yellow)}
+.n-bar.vlow{background:var(--red)} .n-bar.over{background:var(--orange)}
+.n-val{font-size:9.5px;font-weight:700;width:40px;text-align:right;flex-shrink:0}
+.n-val.ok{color:var(--green)} .n-val.low{color:var(--yellow)}
+.n-val.vlow{color:var(--red)} .n-val.over{color:var(--orange)}
+.n-gap{font-size:9px;color:var(--muted);width:68px;text-align:right;flex-shrink:0}
+.n-target{font-size:8.5px;color:#94a3b8;width:52px;text-align:right;flex-shrink:0}
+
+/* COMPARE */
+.compare-page{padding:12px 16px}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+.compare-title{font-size:13px;font-weight:700;margin-bottom:12px}
+.compare-title.k1{color:var(--kid1)} .compare-title.k2{color:var(--kid2)}
+
+/* CUSTOM ENTRY */
+.custom-box{background:var(--bg);border-radius:8px;padding:8px;margin-bottom:6px;border:1px solid var(--border)}
+.nut-row{display:grid;grid-template-columns:1fr 80px 55px 26px;gap:5px;align-items:center;margin-top:4px}
+
+
+/* ══ V9 对比表格专用样式 ══ */
+.v9 { font-size:12px; padding:16px; }
+.v9 h1 { font-size:17px; font-weight:700; margin-bottom:4px; }
+.v9 h2 { font-size:14px; font-weight:700; margin:20px 0 8px; color:#3b4f6b; border-left:4px solid #3b82f6; padding-left:8px; }
+.v9 .subtitle { font-size:11px; color:#6b7a99; margin-bottom:10px; line-height:1.6; }
+.v9 .prep-box { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:12px; }
+.v9 .prep-card { padding:7px 10px; border-radius:8px; font-size:10px; font-weight:600; line-height:1.7; }
+.v9 .legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px; font-size:11px; align-items:center; }
+.v9 .legend-item { display:flex; align-items:center; gap:4px; }
+.v9 .dot { width:9px; height:9px; border-radius:50%; }
+.v9 .table-wrap { overflow-x:auto; border-radius:12px; box-shadow:0 2px 16px rgba(0,0,0,.09); background:#fff; margin-bottom:20px; }
+.v9 table { width:100%; border-collapse:collapse; min-width:1200px; }
+.v9 thead tr:first-child th { padding:9px 6px 3px; font-size:10px; font-weight:700; border-bottom:1px solid #e8edf5; white-space:nowrap; text-align:center; }
+.v9 thead tr:first-child th:first-child { text-align:left; padding-left:10px; }
+.v9 thead tr:last-child th { padding:2px 6px 8px; font-size:9px; font-weight:600; color:#6b7a99; text-align:center; border-bottom:2px solid #e2e8f0; }
+.v9 thead tr:last-child th:first-child { text-align:left; padding-left:10px; }
+.v9 tbody tr:hover { background:#f8faff; }
+.v9 tbody td { padding:6px 6px; text-align:center; border-bottom:1px solid #f0f4f8; font-size:10.5px; color:#374151; vertical-align:middle; }
+.v9 tbody td:first-child { text-align:left; padding-left:10px; font-weight:500; color:#1a2235; font-size:10.5px; }
+.v9 .sec td { background:#eef2f9; font-size:9px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:#64748b; padding:6px 10px; text-align:left; border-bottom:1px solid #dde3ee; border-top:2px solid #dde3ee; }
+.v9 .d1 { background:#fff7ed55; font-weight:700; color:#9a3412; }
+.v9 .d2 { background:#fef9e755; font-weight:700; color:#78350f; }
+.v9 .note { font-size:11px; color:#475569; padding:12px 14px; background:#f8fafc; border-radius:8px; border-left:3px solid #3b82f6; line-height:1.7; margin-top:6px; }
+.v9 .note strong { color:#1e293b; }
+/* shared badge styles */
+.cv { font-weight:700; font-size:10.5px; display:block; }
+.cp { display:inline-block; padding:1px 5px; border-radius:9px; font-size:9.5px; font-weight:700; margin-top:1px; }
+.h { background:#dcfce7; color:#15803d; } .m { background:#fef9c3; color:#854d0e; }
+.l { background:#fee2e2; color:#b91c1c; } .o { background:#fed7aa; color:#9a3412; }
+.x { background:#f1f5f9; color:#94a3b8; } .na { color:#c0cce0; font-size:10px; }
+/* prep card colors */
+.p-wb{background:#dbeafe;color:#1e40af}.p-ce{background:#dcfce7;color:#14532d}
+.p-go{background:#fefce8;color:#713f12}.p-pe{background:#f3e8ff;color:#581c87}
+.p-au{background:#fdf2f8;color:#831843}.p-fr{background:#fff7ed;color:#9a3412}
+.p-gnc{background:#fef9c3;color:#713f12}.p-dd{background:#e0f2fe;color:#0369a1}
+.p-mv{background:#f5f3ff;color:#6d28d9}.p-vc{background:#fff7ed;color:#c2410c}
+.p-ca{background:#f0fdf4;color:#166534}
+/* th colors */
+.th-n{background:#f7f9fc;color:#374151;width:165px}
+.th-d1{background:#fff7ed;color:#9a3412}.th-d2{background:#fef3c7;color:#78350f}
+.th-wb{background:#eff6ff;color:#1d4ed8}.th-ce{background:#f0fdf4;color:#166534}
+.th-go{background:#fefce8;color:#854d0e}.th-pe{background:#fdf4ff;color:#6b21a8}
+.th-au{background:#fdf2f8;color:#831843}.th-fr{background:#fff7ed;color:#9a3412}
+.th-gnc{background:#fef9c3;color:#713f12}.th-dd{background:#e0f2fe;color:#0369a1}
+.th-mv{background:#f5f3ff;color:#6d28d9}.th-vc{background:#fff7ed;color:#c2410c}
+.th-ca{background:#f0fdf4;color:#166534}
+
+  /* ── Segment sections ── */
+  .seg-header{font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;margin:8px 0 4px;display:flex;align-items:center;gap:5px}
+  .seg-night{background:#f0f0ff;color:#4338ca}
+  .seg-home{background:#f0fdf4;color:#15803d}
+  .seg-school{background:#fff7ed;color:#c2410c}
+  .seg-add-row{display:flex;gap:6px;margin-bottom:6px}
+  .seg-add{flex:1;margin-bottom:0!important;font-size:10.5px;padding:5px 0}
+
+  .seg-tab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);font-size:10.5px;font-weight:600;cursor:pointer;transition:all .15s}
+  .seg-tab-active-kid1{background:var(--kid1)!important;color:#fff!important;border-color:var(--kid1)!important}
+  .seg-tab-active-kid2{background:var(--kid2)!important;color:#fff!important;border-color:var(--kid2)!important}
+
+  .src-btn{background:none;border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-size:10px;cursor:pointer;color:var(--muted);flex-shrink:0;line-height:1.4}
+  .src-btn:hover{background:var(--bg);border-color:var(--muted)}
+  #nutrient-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+  #nutrient-modal.open{display:flex}
+  #nutrient-modal-box{background:#fff;border-radius:16px;padding:16px;max-width:480px;width:95%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+
+/* ══ MOBILE RESPONSIVE ══ */
+@media (max-width: 600px) {
+  /* Tab bar */
+  .tab-btn { padding: 10px 10px; font-size: 11px; }
+  .tab-bar { padding: 0 8px; }
+
+  /* Hide text labels on very small screens, keep emoji */
+  .tab-btn::after { content: none; }
+
+  /* Tracker panels */
+  .tracker-layout { padding: 8px 10px; gap: 10px; }
+  .kid-panel { border-radius: 12px; }
+  .kid-header { padding: 10px 12px 0; }
+  .section-title { font-size: 11px; padding: 6px 12px; }
+  .quick-grid { gap: 3px; }
+  .q-btn { font-size: 9.5px !important; padding: 5px 7px !important; }
+
+  /* Segment tabs */
+  .seg-tab { font-size: 9.5px !important; padding: 4px 8px !important; }
+
+  /* Nutrient result bars */
+  .n-row { gap: 4px; flex-wrap: nowrap; }
+  .n-name { font-size: 9.5px; min-width: 72px; max-width: 72px; }
+  .n-bar-wrap { flex: 1; min-width: 0; }
+  .n-val { font-size: 10px; min-width: 30px; text-align: right; }
+  .n-gap { font-size: 9px; min-width: 50px; text-align: right; }
+  .n-target { font-size: 9px; color: var(--muted); min-width: 42px; }
+  .src-btn { font-size: 9px; padding: 1px 4px; }
+
+  /* Calc/save buttons */
+  .calc-btn { font-size: 12px; padding: 12px 8px; }
+
+  /* Mode banner */
+  #mode-banner-wrap { padding: 6px 10px; }
+
+  /* Add buttons */
+  .add-btn { font-size: 11px; }
+
+  /* Comparison table - allow horizontal scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Food lib cards */
+  #food-lib-grid { padding: 0; }
+
+  /* History calendar */
+  #hist-calendar { gap: 3px; }
+
+  /* Chips */
+  .chip { font-size: 9.5px; padding: 3px 8px; }
+
+  /* Kid panel top padding */
+  .k1, .k2 { padding-bottom: 8px; }
+
+  /* Entry rows */
+  .entry-row { gap: 4px; }
+  .del-btn { width: 22px; height: 22px; font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+  .tab-btn { padding: 9px 7px; font-size: 10px; }
+  .n-name { min-width: 60px; max-width: 60px; font-size: 9px; }
+  .n-gap { display: none; }
+}
+
+  .tab-label { display: inline; }
+  @media (max-width: 480px) { .tab-label { display: none; } }
+
+html, body { overflow-x: hidden; }
+* { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<!-- version stamp -->
+<div style="text-align:right;font-size:9px;color:#94a3b8;padding:2px 12px 0">
+  v2.0 · Oct 8 2026 · <span id="cloud-status">离线模式</span>
+</div>
+<!-- ══ MAIN TAB BAR ══ -->
+<div style="text-align:right;font-size:9px;color:#94a3b8;padding:2px 12px 0">v2.0 · Oct 8 2026</div>
+<div class="tab-bar" id="main-tab-bar">
+  <button class="tab-btn active" onclick="mainTab('comparison')">📊<span class="tab-label"> 产品对比</span></button>
+  <button class="tab-btn" onclick="mainTab('foodlib')">🥦<span class="tab-label"> 食物库</span></button>
+  <button class="tab-btn" onclick="mainTab('tracker')">📋<span class="tab-label"> 每日追踪</span></button>
+  <button class="tab-btn" onclick="mainTab('compare')">📈<span class="tab-label"> 两娃报告</span></button>
+  <button class="tab-btn" onclick="mainTab('info')">ℹ️<span class="tab-label"> DRI说明</span></button>
+  <button class="tab-btn" onclick="mainTab('history')">📅<span class="tab-label"> 历史记录</span></button>
+</div>
+
+<!-- ══ TAB: 产品对比表 ══ -->
+<div id="main-comparison" class="tab-content active">
+  <div class="v9">
+<h1>六款产品营养全对比 ✅ 最终版</h1>
+<p class="subtitle">统一基准：200ml水冲泡 · 数据来自标签照片 · % = 每杯含量 ÷ 每日需求<br>
+DRI来源：新加坡HPB官方RDA 2022 + IOM | 1–3岁大宝列 / 4–6岁小宝列分别显示</p>
+
+<div id="cmp-root"><div style="padding:30px;text-align:center;color:var(--muted)">载入中…</div></div>
+<p style="font-size:10px;color:#c0cce0;margin-top:10px;text-align:center;">
+  DRI来源：新加坡HPB 2022官方RDA + IOM · 数据来自用户上传标签照片 · Oct 2026
+</p>
+  </div>
+</div>
+
+<!-- ══ MODE BANNER (shown only on tracker tabs) ══ -->
+<div id="mode-banner-wrap" style="display:none">
+<div class="mode-banner">
+  <span class="mode-label">模式：</span>
+  <button class="mode-btn" id="btn-normal" onclick="setMode('normal')">📊 普通模式</button>
+  <button class="mode-btn active-tall" id="btn-tall" onclick="setMode('tall')">🚀 追高追重模式</button>
+  <span class="mode-info" id="mode-desc">🚀 追高追重模式：骨骼/生长激素营养素目标更高</span>
+</div>
+</div>
+
+<!-- ══ TAB: 每日追踪 ══ -->
+<div id="main-tracker" class="tab-content">
+<div id="main-tracker-inner" class="tab-content active">
+  <div class="page-header">
+    <h1>每日营养追踪</h1>
+    <p>记录今天吃了什么，自动计算每种营养素摄入量和缺口</p>
+  </div>
+  <div class="tracker-layout">
+    <!-- KID 1 -->
+    <div class="kid-panel" id="k1-panel">
+      <div class="kid-header k1">
+        <div class="kid-dot">👦</div>
+        <div style="flex:1">
+          <input class="kid-name-input" id="k1-name" value="大宝" placeholder="名字">
+          <select class="kid-age-select" id="k1-age">
+            <option value="1-3">1–3岁</option>
+            <option value="4-6" selected>4–6岁</option>
+          </select>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
+          <button onclick="shiftDate(1,-1)" style="flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">&lt;</button>
+          <input type="date" id="k1-date" class="kid-age-select" style="flex:1;margin-top:0" onchange="loadDateToTracker(1,this.value);updateRemarkDisplay(1,this.value)">
+          <button onclick="shiftDate(1,1)" style="flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">&gt;</button>
+        </div>
+          <div id="k1-remark-display" style="margin-top:3px;font-size:10px;color:var(--muted);padding:2px 0"></div>
+        </div>
+      </div>
+      <div class="food-log" id="k1-log">
+        <div class="section-title">快速添加已知产品</div>
+        <!-- Segment selector -->
+        <div style="display:flex;gap:5px;margin-bottom:8px" id="k1-seg-tabs">
+          <button id="k1-tab-night" onclick="selectSeg(1,'night')"
+            class="seg-tab">🌙 半夜</button>
+          <button id="k1-tab-home" onclick="selectSeg(1,'home')"
+            class="seg-tab seg-tab-active-kid1">🏠 白天家里</button>
+          <button id="k1-tab-school" onclick="selectSeg(1,'school')"
+            class="seg-tab">🏫 白天学校</button>
+        </div>
+        <div class="quick-grid" id="k1-quick"></div>
+        <div class="section-title">今天摄入记录</div>
+
+        <!-- 半夜 -->
+        <div class="seg-header seg-night" style="justify-content:space-between"><span>🌙 半夜</span><button onclick="copySegTo(1,'night',2)" style="font-size:9.5px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--kid2);background:var(--kid2-light);color:var(--kid2);font-weight:700;cursor:pointer">复制→小宝</button></div>
+        <div id="k1-entries-night"></div>
+        <div class="seg-add-row">
+          <button class="add-btn seg-add" onclick="setAddSeg(1,'night');mainTab('foodlib')" style="border-color:var(--kid1);color:var(--kid1)">🥦<span class="tab-label"> 食物库</span></button>
+          <button class="add-btn seg-add" onclick="addCustom(1,'night')">+ 手动</button>
+        </div>
+
+        <!-- 白天家里 -->
+        <div class="seg-header seg-home" style="justify-content:space-between"><span>🏠 白天家里</span><button onclick="copySegTo(1,'home',2)" style="font-size:9.5px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--kid2);background:var(--kid2-light);color:var(--kid2);font-weight:700;cursor:pointer">复制→小宝</button></div>
+        <div id="k1-entries-home"></div>
+        <div class="seg-add-row">
+          <button class="add-btn seg-add" onclick="setAddSeg(1,'home');mainTab('foodlib')" style="border-color:var(--kid1);color:var(--kid1)">🥦<span class="tab-label"> 食物库</span></button>
+          <button class="add-btn seg-add" onclick="addCustom(1,'home')">+ 手动</button>
+        </div>
+
+        <!-- 白天学校 -->
+        <div class="seg-header seg-school" style="justify-content:space-between">
+          <span>🏫 白天学校</span>
+          <button onclick="copySegTo(1,'school',2)" style="font-size:9.5px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--kid2);background:var(--kid2-light);color:var(--kid2);font-weight:700;cursor:pointer">复制→小宝</button>
+        </div>
+        <div id="k1-entries-school"></div>
+        <div class="seg-add-row">
+          <button class="add-btn seg-add" onclick="setAddSeg(1,'school');mainTab('foodlib')" style="border-color:var(--kid1);color:var(--kid1)">🥦<span class="tab-label"> 食物库</span></button>
+          <button class="add-btn seg-add" onclick="addCustom(1,'school')">+ 手动</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:0">
+      <button class="calc-btn k1" style="flex:1;border-radius:0 0 0 var(--radius)" onclick="calculate(1)">计算摄入</button>
+      <button class="calc-btn k1" style="flex:0 0 80px;border-radius:0 0 var(--radius) 0;background:#4f46e5;border-left:1px solid #4338ca" onclick="saveDay(1)">💾 保存</button>
+    </div>
+      <div class="results-section" id="k1-results" style="display:none">
+        <div class="section-title">今日摄入 vs 目标</div>
+        <div class="summary-chips" id="k1-chips"></div>
+        <div id="k1-bars"></div>
+      </div>
+    </div>
+    <!-- KID 2 -->
+    <div class="kid-panel k2-panel" id="k2-panel">
+      <div class="kid-header k2">
+        <div class="kid-dot">👧</div>
+        <div style="flex:1">
+          <input class="kid-name-input" id="k2-name" value="小宝" placeholder="名字">
+          <select class="kid-age-select" id="k2-age">
+            <option value="1-3">1–3岁</option>
+            <option value="4-6">4–6岁</option>
+          </select>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
+          <button onclick="shiftDate(2,-1)" style="flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">&lt;</button>
+          <input type="date" id="k2-date" class="kid-age-select" style="flex:1;margin-top:0" onchange="loadDateToTracker(2,this.value);updateRemarkDisplay(2,this.value)">
+          <button onclick="shiftDate(2,1)" style="flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg);font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">&gt;</button>
+        </div>
+          <div id="k2-remark-display" style="margin-top:3px;font-size:10px;color:var(--muted);padding:2px 0"></div>
+        </div>
+      </div>
+      <div class="food-log" id="k2-log">
+        <div class="section-title">快速添加已知产品</div>
+        <!-- Segment selector -->
+        <div style="display:flex;gap:5px;margin-bottom:8px" id="k2-seg-tabs">
+          <button id="k2-tab-night" onclick="selectSeg(2,'night')"
+            class="seg-tab">🌙 半夜</button>
+          <button id="k2-tab-home" onclick="selectSeg(2,'home')"
+            class="seg-tab seg-tab-active-kid2">🏠 白天家里</button>
+          <button id="k2-tab-school" onclick="selectSeg(2,'school')"
+            class="seg-tab">🏫 白天学校</button>
+        </div>
+        <div class="quick-grid" id="k2-quick"></div>
+        <div class="section-title">今天摄入记录</div>
+
+        <!-- 半夜 -->
+        <div class="seg-header seg-night" style="justify-content:space-between"><span>🌙 半夜</span><button onclick="copySegTo(2,'night',1)" style="font-size:9.5px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--kid1);background:var(--kid1-light);color:var(--kid1);font-weight:700;cursor:pointer">复制→大宝</button></div>
+        <div id="k2-entries-night"></div>
+        <div class="seg-add-row">
+          <button class="add-btn seg-add" onclick="setAddSeg(2,'night');mainTab('foodlib')" style="border-color:var(--kid2);color:var(--kid2)">🥦<span class="tab-label"> 食物库</span></button>
+          <button class="add-btn seg-add" onclick="addCustom(2,'night')">+ 手动</button>
+        </div>
+
+        <!-- 白天家里 -->
+        <div class="seg-header seg-home" style="justify-content:space-between"><span>🏠 白天家里</span><button onclick="copySegTo(2,'home',1)" style="font-size:9.5px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--kid1);background:var(--kid1-light);color:var(--kid1);font-weight:700;cursor:pointer">复制→大宝</button></div>
+        <div id="k2-entries-home"></div>
+        <div class="seg-add-row">
+          <button class="add-btn seg-add" onclick="setAddSeg(2,'home');mainTab('foodlib')" style="border-color:var(--kid2);color:var(--kid2)">🥦<span class="tab-label"> 食物库</span></button>
+          <button class="add-btn seg-add" onclick="addCustom(2,'home')">+ 手动</button>
+        </div>
+
+        <!-- 白天学校 -->
+        <div class="seg-header seg-school" style="justify-content:space-between">
+          <span>🏫 白天学校</span>
+          <button onclick="copySegTo(2,'school',1)" style="font-size:9.5px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--kid1);background:var(--kid1-light);color:var(--kid1);font-weight:700;cursor:pointer">复制→大宝</button>
+        </div>
+        <div id="k2-entries-school"></div>
+        <div class="seg-add-row">
+          <button class="add-btn seg-add" onclick="setAddSeg(2,'school');mainTab('foodlib')" style="border-color:var(--kid2);color:var(--kid2)">🥦<span class="tab-label"> 食物库</span></button>
+          <button class="add-btn seg-add" onclick="addCustom(2,'school')">+ 手动</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:0">
+      <button class="calc-btn k2" style="flex:1;border-radius:0 0 0 var(--radius)" onclick="calculate(2)">计算摄入</button>
+      <button class="calc-btn k2" style="flex:0 0 80px;border-radius:0 0 var(--radius) 0;background:#be185d;border-left:1px solid #9d174d" onclick="saveDay(2)">💾 保存</button>
+    </div>
+      <div class="results-section" id="k2-results" style="display:none">
+        <div class="section-title">今日摄入 vs 目标</div>
+        <div class="summary-chips" id="k2-chips"></div>
+        <div id="k2-bars"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ TAB: 两娃报告 ══ -->
+<div id="main-compare" class="tab-content">
+<div id="main-compare-inner" class="tab-content">
+  <div class="page-header" style="padding-bottom:12px"><h1>对比报告</h1><p>先在追踪页计算两个孩子，再来这里对比</p></div>
+  <div class="compare-page">
+    <div class="compare-grid">
+      <div class="compare-card"><div class="compare-title k1" id="ct1">👦 大宝</div><div id="cb1"><p style="color:var(--muted);font-size:12px">请先在追踪页点击"计算"</p></div></div>
+      <div class="compare-card"><div class="compare-title k2" id="ct2">👧 小宝</div><div id="cb2"><p style="color:var(--muted);font-size:12px">请先在追踪页点击"计算"</p></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ TAB: DRI说明 ══ -->
+<div id="main-info" class="tab-content">
+<div id="main-info-inner" class="tab-content">
+  <div class="page-header"><h1>DRI数据说明</h1></div>
+  <div style="padding:16px;max-width:800px">
+    <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px">
+      <h3 style="font-size:13px;margin-bottom:10px;color:var(--kid1)">📊 普通模式 — 数据来源</h3>
+      <p style="font-size:11px;color:var(--muted);line-height:1.8">主要参考新加坡卫生促进局 <strong>HPB 官方RDA（2022年11月更新）</strong>，HPB未收录的营养素参考美国国家医学研究所 IOM/FNB DRI。</p>
+      <div style="overflow-x:auto;margin-top:12px">
+      <table style="width:100%;font-size:10.5px;border-collapse:collapse">
+        <thead><tr style="background:#f8fafc"><th style="padding:5px 8px;text-align:left;border-bottom:1px solid var(--border)">营养素</th><th style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--border)">1–3岁</th><th style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--border)">4–6岁</th><th style="padding:5px 8px;text-align:left;border-bottom:1px solid var(--border)">来源</th></tr></thead>
+        <tbody id="dri-table-body"></tbody>
+      </table>
+      </div>
+    </div>
+    <div style="background:var(--tall-light);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:3px solid var(--tall)">
+      <h3 style="font-size:13px;margin-bottom:10px;color:var(--tall)">🚀 追高追重模式 — 目标说明</h3>
+      <p style="font-size:11px;color:#155e75;line-height:1.8;margin-bottom:10px">追高追重模式在普通DRI基础上，对<strong>骨骼矿化和生长激素</strong>相关营养素设定更高目标，参考儿科营养学研究及美国儿科学会（AAP）建议。</p>
+      <div id="tall-info-table"></div>
+      <p style="font-size:10px;color:#155e75;margin-top:8px">⚠️ 追高目标仅供参考，请勿单独依靠补充剂达到目标，优先通过奶粉+均衡饮食。如有疑问请咨询儿科医生。</p>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- ══ TAB: 食物营养库 ══ -->
+<div id="main-foodlib" class="tab-content">
+  <div style="padding:14px 16px 0">
+    <h1 style="font-size:18px;font-weight:700">食物营养成分库</h1>
+    <p style="font-size:11px;color:var(--muted);margin-top:3px">数据来源：USDA FoodData Central · 每100g含量</p>
+  </div>
+
+  <!-- search/filter -->
+  <div style="padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input id="food-search" type="text" placeholder="🔍 搜索食物..." oninput="filterFoodLib()"
+      style="flex:1;min-width:160px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none">
+    <div style="display:flex;gap:5px;flex-wrap:wrap" id="cat-filters"></div>
+  </div>
+
+  <div style="padding:0 16px 16px" id="food-lib-grid"></div>
+</div>
+
+
+<!-- ══ TAB: 历史记录 ══ -->
+<div id="main-history" class="tab-content">
+  <div style="padding:14px 16px 0">
+    <h1 style="font-size:18px;font-weight:700">历史记录</h1>
+    <p style="font-size:11px;color:var(--muted);margin-top:3px">每次保存的每日摄入记录，自动存储在本设备</p>
+  </div>
+
+  <div style="padding:12px 16px">
+    <!-- Kid toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="hist-btn-1" onclick="showHistory(1)"
+        style="padding:7px 16px;border-radius:20px;border:2px solid var(--kid1);background:var(--kid1);color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+        👦 大宝
+      </button>
+      <button id="hist-btn-2" onclick="showHistory(2)"
+        style="padding:7px 16px;border-radius:20px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer">
+        👧 小宝
+      </button>
+      <button onclick="exportCSV()" style="margin-left:auto;padding:7px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer">
+        ⬇ 导出CSV
+      </button>
+
+    </div>
+
+    <!-- Calendar strip -->
+    <div id="hist-calendar" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px"></div>
+
+    <!-- Detail view -->
+    <div id="hist-detail"></div>
+  </div>
+</div>
+
+
+<!-- Nutrient source modal -->
+<div id="nutrient-modal" onclick="closeNutrientModal(event)">
+  <div id="nutrient-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div id="modal-title" style="font-size:15px;font-weight:700"></div>
+      <button onclick="document.getElementById('nutrient-modal').classList.remove('open')"
+        style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted)">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<script>
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE + AUTH LAYER
+// ═══════════════════════════════════════════════════════════════════════════
+function _deobf(s){return atob(s).split('').reverse().join('');}
+// Same Supabase project as SGCashback
+const SUPABASE_URL = _deobf('b2MuZXNhYmFwdXMueml3c2d4dG1kZnBxYnNrZ2lwcHovLzpzcHR0aA==');
+const SUPABASE_ANON_KEY = _deobf('UVZyWjItQ003WjEzc0NCeHNWYXViUFVXNGVGak1QWTdfUV9yV3N4clZHUy4wM04yUVRPNVlUTzVBak02SUNjNFZtSXNjak4wTWpNeFFETzNFak9pUVhZcEpDTGk0MmJ1Rm1JNklTWnM5bWNpd2lJNmwyZHpkR2UwMUdabUJYY2lOM2FubEdjd3BuSTZJaVpsSm5Jc0lTWnpGbVloQlhkekppT2lNM2NwSnllLjlKQ1ZYcGtJNklDYzVSbklzSWlOMUl6VUlKaU9pY0diaEp5ZQ==');
+let db;
+try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+catch(e) { console.warn('Supabase init failed', e); }
+
+// ── Token helpers ──────────────────────────────────────────────────────────
+function getToken() { return localStorage.getItem('loginToken') || ''; }
+
+async function validateLoginToken(token) {
+  if (!token) return false;
+  try {
+    const {data, error} = await db.rpc('validate_login_token', {p_token: token});
+    if (error) { console.warn('[auth] validate error', error); return false; }
+    return data === true;
+  } catch(err) { console.warn('[auth] validate failed', err); return false; }
+}
+
+// ── Login UI ───────────────────────────────────────────────────────────────
+function showLoginPrompt(errorMsg) {
+  if (document.getElementById('nutrition-login-overlay')) return;
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="nutrition-login-overlay" style="
+      position:fixed;inset:0;background:var(--bg);z-index:2000;
+      display:flex;align-items:center;justify-content:center;padding:24px">
+      <div style="width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;text-align:center">
+        <div style="font-size:48px;margin-bottom:12px">🍼</div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:6px">儿童营养追踪</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:20px">输入与 SGCashback 相同的 login token</div>
+        <input id="nutrition-token-input" type="text" placeholder="Login token"
+          autocapitalize="off" autocorrect="off" spellcheck="false"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);
+                 background:var(--surface);color:var(--text);font-size:16px;outline:none;
+                 font-family:inherit;margin-bottom:10px;text-align:center"
+          onkeydown="if(event.key==='Enter')submitNutritionToken()">
+        <div id="nutrition-login-error" style="color:#dc2626;font-size:13px;margin-bottom:10px;
+             display:${errorMsg?'block':'none'}">${errorMsg||''}</div>
+        <button onclick="submitNutritionToken()" style="
+          width:100%;padding:14px;border-radius:12px;background:var(--kid1);
+          color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer">
+          继续
+        </button>
+        <div style="font-size:11px;color:var(--muted);margin-top:12px">
+          数据通过 Supabase 云端同步 · 多设备共享
+        </div>
+      </div>
+    </div>`);
+  document.getElementById('nutrition-token-input').focus();
+}
+
+window.submitNutritionToken = async function() {
+  const input = document.getElementById('nutrition-token-input');
+  const token = input.value.trim();
+  if (!token) return;
+  const btn = document.querySelector('#nutrition-login-overlay button');
+  const errEl = document.getElementById('nutrition-login-error');
+  btn.disabled = true; btn.textContent = '验证中…'; errEl.style.display = 'none';
+  const valid = await validateLoginToken(token);
+  if (valid) {
+    localStorage.setItem('loginToken', token);
+    document.getElementById('nutrition-login-overlay').remove();
+    initWithCloud();
+  } else {
+    btn.disabled = false; btn.textContent = '继续';
+    errEl.textContent = '令牌无效，请重试。';
+    errEl.style.display = 'block';
+    input.value = ''; input.focus();
+  }
+};
+
+// ── Cloud save / load ──────────────────────────────────────────────────────
+async function cloudSaveDay(kid, date, segEntries) {
+  const token = getToken();
+  if (!token || !db) return;
+  const ageKey = document.getElementById('k'+kid+'-age')?.value || '4-6';
+  const name   = document.getElementById('k'+kid+'-name')?.value || (kid===1?'大宝':'小宝');
+  const flat = SEGS.flatMap(s => (segEntries[s]||[]).map(e => ({
+    id: String(e.id), seg: s, name: e.name || '', isFood: !!e.isFood, custom: !!e.custom,
+    foodKey: e.foodKey || null, presetKey: e.presetKey || null,
+    qty: Number(e.qty) || 1, amount: entryAmount(e), nutrients: e.nutrients || {}
+  })));
+  try {
+    const {error} = await db.rpc('rpc_nutrition_save_day', {
+      p_token: token, p_kid: kid, p_date: date, p_age_key: ageKey,
+      p_name: name, p_remark: getAutoRemark(date), p_entries: flat });
+    if (error) throw error;
+  } catch(err) { console.warn('[cloud] save failed', err); showToast('⚠️ 云端保存失败，已存本机', kid); }
+}
+
+async function cloudLoadDay(kid, date) {
+  const token = getToken();
+  if (!token || !db) return null;
+  try {
+    const {data, error} = await db.rpc('rpc_nutrition_load_day', {
+      p_token: token, p_kid: kid, p_date: date
+    });
+    if (error) throw error;
+    return data;   // {log, entries[], totals}
+  } catch(err) { console.warn('[cloud] load failed', err); return null; }
+}
+
+async function cloudListDates(kid) {
+  const token = getToken();
+  if (!token || !db) return [];
+  try {
+    const {data, error} = await db.rpc('rpc_nutrition_list_dates', {
+      p_token: token, p_kid: kid
+    });
+    if (error) throw error;
+    return data || [];
+  } catch(err) { console.warn('[cloud] list dates failed', err); return []; }
+}
+
+async function cloudDeleteDay(kid, date) {
+  const token = getToken();
+  if (!token || !db) return;
+  try {
+    await db.rpc('rpc_nutrition_delete_day', {p_token: token, p_kid: kid, p_date: date});
+  } catch(err) { console.warn('[cloud] delete failed', err); }
+}
+
+// ── Patch _persistDay to also call cloud ───────────────────────────────────
+// (called after the original _persistDay writes to localStorage)
+const _origPersistDay = typeof _persistDay !== 'undefined' ? _persistDay : null;
+
+
+
+// ── Main tab switching ──
+function mainTab(name) {
+  const tabs = ['comparison','foodlib','tracker','compare','info','history'];
+  tabs.forEach((t,i) => {
+    document.getElementById('main-'+t).classList.toggle('active', t===name);
+    document.querySelectorAll('#main-tab-bar .tab-btn')[i].classList.toggle('active', t===name);
+  });
+  if (name === 'foodlib' && !foodLibBuilt) { buildFoodLib(); foodLibBuilt = true; }
+  if (name === 'history') { showHistory(currentHistKid||1); }
+  const showBanner = !['comparison','foodlib','history'].includes(name);
+  document.getElementById('mode-banner-wrap').style.display = showBanner ? 'block' : 'none';
+}
+
+// ── Override old switchTab (was for inner tabs, now unused) ──
+function switchTab(tab) {
+  // map old inner tab names to main tab names
+  const map = { tracker:'tracker', compare:'compare', info:'info' };
+  if (map[tab]) mainTab(map[tab]);
+}
+
+
+// ═══════════════════════════════════════════════
+// DRI DATA — 全部4组 (新加坡HPB 2022 + IOM)
+// ═══════════════════════════════════════════════
+const DRI_INFO = [];         // ← nutrition_dri
+
+const DRI_NORMAL = {'1-3':{}, '4-6':{}};
+
+// 追高追重模式：骨骼/生长激素关键营养素目标更高
+const DRI_TALL   = {'1-3':{}, '4-6':{}};
+
+const TALL_NOTES = {};
+
+// ═══════════════════════════════════════════════
+// PRESET PRODUCTS (含量 per 推荐服用量)
+// ═══════════════════════════════════════════════
+const PRESETS = {};          // ← nutrition_products (loaded at startup)
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let currentMode = 'tall';
+let entries = {
+  1: {night:[], home:[], school:[]},
+  2: {night:[], home:[], school:[]}
+};
+let entryId = {1:0, 2:0};
+let currentAddSeg = {1:'home', 2:'home'}; // default segment
+let lastResults = {1:null, 2:null};
+
+function getDRI(ageKey) {
+  return currentMode === 'tall' ? DRI_TALL[ageKey] : DRI_NORMAL[ageKey];
+}
+
+// ═══════════════════════════════════════════════
+// MODE
+// ═══════════════════════════════════════════════
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('btn-normal').className = 'mode-btn' + (m==='normal'?' active-normal':'');
+  document.getElementById('btn-tall').className = 'mode-btn' + (m==='tall'?' active-tall':'');
+  document.getElementById('mode-desc').textContent = m==='normal'
+    ? '新加坡HPB官方RDA标准（2022）'
+    : '🚀 追高追重模式：骨骼/生长激素营养素目标更高';
+  // recalculate if results exist
+  if (lastResults[1]) calculate(1);
+  if (lastResults[2]) calculate(2);
+}
+
+// ═══════════════════════════════════════════════
+// QUICK BUTTONS
+// ═══════════════════════════════════════════════
+function initQuick(kid) {
+  const el = document.getElementById(`k${kid}-quick`);
+  el.innerHTML = '';
+  REF.products.filter(p => p.active).map(p => p.key).forEach(name => {
+    const b = document.createElement('button');
+    b.className = 'q-btn';
+    b.textContent = name;
+    b.onclick = () => quickAdd(kid, name);
+    el.appendChild(b);
+  });
+}
+
+function quickAdd(kid, name) {
+  const id = ++entryId[kid];
+  const preset = PRESETS[name];
+  const isFormula = preset && preset._mlBase;
+  const seg = currentAddSeg[kid] || 'home';
+  entries[kid][seg].push({
+    id, name,
+    nutrients:{...preset},
+    qty: 1,
+    custom: false,
+    presetKey: name,
+    isFormula: !!isFormula,
+    seg
+  });
+  renderEntries(kid);
+}
+
+// ═══════════════════════════════════════════════
+// CUSTOM ENTRY
+// ═══════════════════════════════════════════════
+function addCustom(kid, seg) {
+  const id = ++entryId[kid];
+  const s = seg || currentAddSeg[kid] || 'home';
+  entries[kid][s].push({id, name:'', nutrients:{}, qty:1, custom:true});
+  renderEntries(kid);
+  setTimeout(()=>{ const el=document.getElementById(`en-${kid}-${id}`); if(el) el.focus(); },50);
+}
+
+
+
+function updatePresetMl(kid, id, ml) {
+  const found = findEntry(kid, id); if (!found) return;
+  const e = found.entry; if (!e) return;
+  const base = e.nutrients._mlBase || 200;
+  const newMl = parseFloat(ml) || base;
+  const scale = newMl / base;
+  // Find original per-base nutrients from PRESETS
+  const preset = PRESETS[e.presetKey];
+  if (preset) {
+    Object.keys(preset).forEach(k => {
+      if (k !== '_mlBase') e.nutrients[k] = parseFloat((preset[k] * scale).toFixed(3));
+    });
+    e.nutrients._mlBase = base;
+  }
+  e.qty = scale;
+  renderEntries(kid);
+}
+
+function updateQty(kid, id, val) {
+  const found = findEntry(kid, id);
+  if (!found) return;
+  const e = found.entry;
+  const newQty = parseFloat(val) || 1;
+  e.qty = newQty;
+  const preset = e.presetKey ? PRESETS[e.presetKey] : null;
+  if (preset) {
+    Object.keys(preset).forEach(k => {
+      if (k !== '_mlBase') e.nutrients[k] = parseFloat((preset[k] * newQty).toFixed(3));
+    });
+  }
+}
+
+function updateName(kid, id, val) {
+  const f = findEntry(kid,id); if (f) f.entry.name = val;
+}
+
+function addNutRow(kid, id) {
+  const f = findEntry(kid,id); if (!f) return; const e = f.entry;
+  const allKeys = Object.keys({...DRI_NORMAL["1-3"], "蛋白质(g)":0, "精氨酸(mg)":0});
+  const unused = allKeys.find(k=>!(k in e.nutrients))||allKeys[0];
+  e.nutrients[unused] = 0;
+  renderEntries(kid);
+}
+
+function updateNutKey(kid, id, oldK, newK) {
+  const f = findEntry(kid,id); if (!f) return; const e = f.entry;
+  if (oldK===newK) return;
+  e.nutrients[newK] = e.nutrients[oldK];
+  delete e.nutrients[oldK];
+  renderEntries(kid);
+}
+
+function updateNutVal(kid, id, key, val) {
+  const f = findEntry(kid,id); if (f) f.entry.nutrients[key] = parseFloat(val)||0;
+}
+
+function removeNut(kid, id, key) {
+  const f = findEntry(kid,id); if (f) { delete f.entry.nutrients[key]; renderEntries(kid); }
+}
+
+function renderEntries(kid) {
+  const allKeys = [...Object.keys(DRI_NORMAL["1-3"]), "蛋白质(g)", "精氨酸(mg)"];
+  const container = document.getElementById(`k${kid}-entries`);
+  container.innerHTML = (entries[kid][seg]||[]).map(entry => {
+    if (!entry.custom) {
+      // Formula milk: show ml input
+      if (entry.nutrients && entry.nutrients._mlBase) {
+        const base = entry.nutrients._mlBase;
+        const currentMl = Math.round(entry.qty * base);
+        return `<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+          <span style="font-size:10.5px;font-weight:600;padding:5px 7px;background:var(--kid1-light);border-radius:7px;border:1px solid var(--kid1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${entry.name}</span>
+          <input type="number" min="50" step="50" value="${currentMl}"
+            style="width:62px;flex-shrink:0;text-align:center;border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:10.5px"
+            onchange="updatePresetMl(${kid},${entry.id},this.value)" title="加水量ml">
+          <span style="font-size:9.5px;font-weight:700;color:var(--kid1);flex-shrink:0">ml</span>
+          <button class="del-btn" style="flex-shrink:0" onclick="removeEntry(${kid},${entry.id})">×</button>
+        </div>`;
+      }
+      return `<div class="entry-row">
+        <span style="font-size:10.5px;font-weight:600;padding:5px 7px;background:var(--bg);border-radius:7px;border:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry.name}</span>
+        <input type="number" min="0.5" step="0.5" value="${entry.qty}" style="text-align:center"
+          onchange="updateQty(${kid},${entry.id},this.value)" title="份数">
+        <button class="del-btn" onclick="removeEntry(${kid},${entry.id})">×</button>
+      </div>`;
+    }
+    const nutRows = Object.entries(entry.nutrients).map(([k,v])=>`
+      <div class="nut-row">
+        <select onchange="updateNutKey(${kid},${entry.id},'${k}',this.value)">
+          ${allKeys.map(nk=>`<option value="${nk}"${nk===k?' selected':''}>${nk}</option>`).join('')}
+        </select>
+        <input type="number" value="${v}" min="0" step="0.01"
+          onchange="updateNutVal(${kid},${entry.id},'${k}',this.value)" style="text-align:center">
+        <span></span>
+        <button class="del-btn" onclick="removeNut(${kid},${entry.id},'${k}')">×</button>
+      </div>`).join('');
+    return `<div class="custom-box">
+      <div class="entry-row" style="grid-template-columns:1fr 26px;margin-bottom:4px">
+        <input id="en-${kid}-${entry.id}" type="text" placeholder="食物/补充剂名称" value="${entry.name}"
+          onchange="updateName(${kid},${entry.id},this.value)">
+        <button class="del-btn" onclick="removeEntry(${kid},${entry.id})">×</button>
+      </div>
+      ${nutRows}
+      <button class="add-btn" style="margin-top:4px" onclick="addNutRow(${kid},${entry.id})">+ 添加营养素</button>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// CALCULATE
+// ═══════════════════════════════════════════════
+function calculate(kid) {
+  const ageKey = document.getElementById(`k${kid}-age`).value;
+  const dri = getDRI(ageKey);
+  const totals = {};
+
+  allEntries(kid).forEach(e => {
+    Object.entries(e.nutrients).forEach(([n, v]) => {
+      if (n === '_mlBase') return;
+      totals[n] = (totals[n] || 0) + v;
+    });
+  });
+
+  lastResults[kid] = {totals, ageKey};
+  renderResults(kid, totals, dri);
+  updateCompare(kid);
+}
+
+function renderResults(kid, totals, dri) {
+  const barsEl = document.getElementById(`k${kid}-bars`);
+  const chipsEl = document.getElementById(`k${kid}-chips`);
+
+  let ok=[], low=[], vlow=[], over=[];
+  const rows = Object.entries(dri).map(([n, target]) => {
+    const got = totals[n]||0;
+    const pct = (got/target)*100;
+    let cls = pct>=100 ? (pct>150?'over':'ok') : (pct>=50?'low':'vlow');
+    if (got>0) { if(cls==='ok')ok.push(n); else if(cls==='low')low.push(n); else if(cls==='vlow')vlow.push(n); else over.push(n); }
+    const gap = got<target ? `缺${(target-got).toFixed(1)}` : '✓达标';
+    return `<div class="n-row">
+      <span class="n-name">${n}</span>
+      <div class="n-bar-wrap"><div class="n-bar ${cls}" style="width:${Math.min(pct,100)}%"></div></div>
+      <span class="n-val ${cls}">${pct.toFixed(0)}%</span>
+      <span class="n-gap">${gap}</span>
+      <span class="n-target">目标:${target}</span>
+      <button class="src-btn" onclick="showNutrientSources('${n}')" title="查看食物来源">🔍</button>
+    </div>`;
+  }).join('');
+
+  barsEl.innerHTML = rows;
+  chipsEl.innerHTML = '';
+  if (ok.length) chipsEl.innerHTML += `<span class="chip ok">✓ 达标 ${ok.length}项</span>`;
+  if (low.length) chipsEl.innerHTML += `<span class="chip low">⚠ 偏低 ${low.length}项</span>`;
+  if (vlow.length) chipsEl.innerHTML += `<span class="chip vlow">↓ 不足 ${vlow.length}项</span>`;
+  if (over.length) chipsEl.innerHTML += `<span class="chip over">↑ 超标 ${over.length}项</span>`;
+  document.getElementById(`k${kid}-results`).style.display = 'block';
+}
+
+function updateCompare(kid) {
+  const name = document.getElementById(`k${kid}-name`).value;
+  document.getElementById(`ct${kid}`).textContent = (kid===1?'👦 ':'👧 ')+name;
+  if (!lastResults[kid]) return;
+  const {totals, ageKey} = lastResults[kid];
+  const dri = getDRI(ageKey);
+  document.getElementById(`cb${kid}`).innerHTML = Object.entries(dri).map(([n,target])=>{
+    const got = totals[n]||0;
+    const pct = (got/target)*100;
+    let cls = pct>=100?(pct>150?'over':'ok'):(pct>=50?'low':'vlow');
+    const gap = got<target
+      ? `<span style="color:var(--red);font-size:9px">缺 ${(target-got).toFixed(1)}</span>`
+      : `<span style="color:var(--green);font-size:9px">✓</span>`;
+    return `<div class="n-row">
+      <span class="n-name">${n}</span>
+      <div class="n-bar-wrap"><div class="n-bar ${cls}" style="width:${Math.min(pct,100)}%"></div></div>
+      <span class="n-val ${cls}">${pct.toFixed(0)}%</span>
+      <span class="n-gap">${gap}</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// INFO TAB
+// ═══════════════════════════════════════════════
+function buildInfoTable() {
+  const tbody = document.getElementById('dri-table-body');
+  tbody.innerHTML = DRI_INFO.map(d=>`
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:4px 8px;font-weight:600">${d.n}</td>
+      <td style="padding:4px 8px;text-align:center">${d.v13}</td>
+      <td style="padding:4px 8px;text-align:center">${d.v46}</td>
+      <td style="padding:4px 8px;color:var(--muted)">${d.src}</td>
+    </tr>`).join('');
+
+  const tallEl = document.getElementById('tall-info-table');
+  tallEl.innerHTML = `<table style="width:100%;font-size:10.5px;border-collapse:collapse">
+    <thead><tr style="background:#cffafe"><th style="padding:4px 8px;text-align:left">营养素</th><th style="padding:4px 8px;text-align:center">1–3岁目标</th><th style="padding:4px 8px;text-align:center">4–6岁目标</th><th style="padding:4px 8px;text-align:left">原因</th></tr></thead>
+    <tbody>${Object.entries(TALL_NOTES).map(([k,note])=>`
+      <tr style="border-bottom:1px solid #a5f3fc">
+        <td style="padding:4px 8px;font-weight:600">${k}</td>
+        <td style="padding:4px 8px;text-align:center;color:var(--tall);font-weight:700">${DRI_TALL["1-3"][k]||'同普通'}</td>
+        <td style="padding:4px 8px;text-align:center;color:var(--tall);font-weight:700">${DRI_TALL["4-6"][k]||'同普通'}</td>
+        <td style="padding:4px 8px;color:#155e75;font-size:10px">${note}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',
+      (i===0&&tab==='tracker')||(i===1&&tab==='compare')||(i===2&&tab==='info'));
+  });
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// INIT
+
+
+// ════════════════════════════════════════════════
+// FOOD DATABASE (per 100g, USDA data)
+// ════════════════════════════════════════════════
+const FOOD_DB = {};          // ← nutrition_foods
+
+// Serve sizes: defaultG is already in right unit
+// Build food list for quick-add in tracker
+const FOOD_CATEGORIES = {};  // ← nutrition_food_categories
+
+
+// ════════════════════════════════════════════
+// FOOD LIBRARY TAB
+// ════════════════════════════════════════════
+let activeFoodCat = 'all';
+
+function buildFoodLib() {
+  const cf = document.getElementById('cat-filters');
+  cf.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'q-btn';
+  allBtn.textContent = '全部';
+  allBtn.style.cssText = 'background:var(--kid1);color:#fff;border-color:var(--kid1)';
+  allBtn.onclick = function() { filterFoodLib('all'); };
+  cf.appendChild(allBtn);
+  Object.keys(FOOD_CATEGORIES).forEach(function(cat) {
+    const btn = document.createElement('button');
+    btn.className = 'q-btn';
+    btn.textContent = cat;
+    btn.onclick = function() { filterFoodLib(cat); };
+    cf.appendChild(btn);
+  });
+  renderFoodLib('all', '');
+}
+
+function filterFoodLib(cat, term) {
+  if (cat !== undefined) activeFoodCat = cat;
+  const s = (term !== undefined ? term : document.getElementById('food-search').value).toLowerCase();
+  renderFoodLib(activeFoodCat, s);
+}
+
+function renderFoodLib(cat, search) {
+  const grid = document.getElementById('food-lib-grid');
+  let html = '';
+
+  if (cat === 'all' && !search) {
+    // Show all categories with headers
+    Object.entries(FOOD_CATEGORIES).forEach(([catName, foodList]) => {
+      html += `<div style="font-size:13px;font-weight:700;color:var(--text);padding:10px 0 6px;border-bottom:2px solid var(--border);margin-bottom:8px;margin-top:4px">${catName}</div>`;
+      html += foodList.map(name => foodCard(name)).join('');
+    });
+  } else {
+    let foods = cat === 'all'
+      ? Object.values(FOOD_CATEGORIES).flat()
+      : (FOOD_CATEGORIES[cat] || []);
+    if (search) foods = foods.filter(f => f.toLowerCase().includes(search));
+    if (cat !== 'all' && !search) {
+      html += `<div style="font-size:13px;font-weight:700;color:var(--text);padding:6px 0 6px;border-bottom:2px solid var(--border);margin-bottom:8px">${cat}</div>`;
+    }
+    html += foods.map(name => foodCard(name)).join('');
+    if (!foods.length) html = '<p style="color:var(--muted);font-size:12px;padding:20px 0">没有找到匹配食物</p>';
+  }
+
+  grid.innerHTML = html;
+}
+
+function foodCard(name) {
+  const f = FOOD_DB[name];
+  if (!f) return '';
+  const nKeys = Object.keys(f.n);
+  const topN = nKeys.slice(0, 6).map(k => {
+    const v = f.n[k];
+    return `<span style="display:inline-block;background:#f1f5f9;border-radius:5px;padding:1px 6px;font-size:9.5px;margin:1px">${k}: <b>${v}</b></span>`;
+  }).join('');
+  return `<div style="background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:11px 13px;margin-bottom:9px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div>
+        <div style="font-size:13px;font-weight:700">${name}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${f.label} · ${f.cal} kcal/100g</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button onclick="addFoodToKid(1,'${name}')" style="padding:4px 8px;border-radius:7px;border:1.5px solid var(--kid1);background:var(--kid1-light);color:var(--kid1);font-size:10px;font-weight:700;cursor:pointer">+大宝</button>
+        <button onclick="addFoodToKid(2,'${name}')" style="padding:4px 8px;border-radius:7px;border:1.5px solid var(--kid2);background:var(--kid2-light);color:var(--kid2);font-size:10px;font-weight:700;cursor:pointer">+小宝</button>
+      </div>
+    </div>
+    <div style="margin-top:7px">${topN}</div>
+    <div id="food-expand-${name.replace(/[^a-z0-9]/gi,'_')}" style="display:none;margin-top:6px;font-size:9.5px;color:var(--muted)">
+      ${nKeys.map(k=>`<span style="display:inline-block;background:#f8fafc;border-radius:5px;padding:1px 6px;margin:1px">${k}: <b>${f.n[k]}</b></span>`).join('')}
+    </div>
+    <button onclick="toggleFoodDetail('${name.replace(/[^a-z0-9]/gi,'_')}')" style="margin-top:5px;font-size:9.5px;color:var(--muted);background:none;border:none;cursor:pointer;padding:0">▸ 查看全部营养素</button>
+  </div>`;
+}
+
+function toggleFoodDetail(id) {
+  const el = document.getElementById('food-expand-' + id);
+  if (!el) return;
+  const btn = el.nextElementSibling;
+  if (el.style.display === 'none') { el.style.display = 'block'; btn.textContent = '▾ 收起'; }
+  else { el.style.display = 'none'; btn.textContent = '▸ 查看全部营养素'; }
+}
+
+function addFoodToKid(kid, foodName) {
+  const f = FOOD_DB[foodName];
+  if (!f) return;
+  const id = ++entryId[kid];
+  // Scale nutrients from per-100g to defaultG
+  // Initial nutrients = exactly per defaultG (scale=1)
+  const scaledN = {};
+  Object.entries(f.n).forEach(([k, v]) => {
+    scaledN[k] = parseFloat(v.toFixed(3));
+  });
+  const unitSuffix = f.unit === 'ml' ? 'ml' : 'g';
+  const seg = currentAddSeg[kid] || 'home';
+  entries[kid][seg].push({ id, name: `${foodName}(${f.defaultG}${unitSuffix})`, nutrients: scaledN, qty: 1, custom: false, isFood: true, foodKey: foodName, foodDefaultG: f.defaultG, seg });
+  renderEntries(kid);
+  // Switch to tracker tab
+  mainTab('tracker');
+  // Show confirmation
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '✓ 已加';
+  btn.style.background = 'var(--green-bg)';
+  btn.style.color = 'var(--green)';
+  btn.style.borderColor = 'var(--green)';
+  setTimeout(() => { btn.textContent = orig; btn.style.background=''; btn.style.color=''; btn.style.borderColor=''; }, 1500);
+}
+
+// ── Override renderEntries to handle food entries with gram input ──
+const _origRenderEntries = renderEntries;
+// Patch to support food gram scaling
+function renderFoodEntry(kid, entry) {
+  const f = FOOD_DB[entry.foodKey];
+  if (!f) return '';
+  const isMl = f.unit === 'ml';
+  const unitLabel = isMl ? 'ml' : 'g';
+  const currentAmt = (entry.qty * f.defaultG).toFixed(0);
+  const kcal = (f.cal * entry.qty * f.defaultG / 100).toFixed(0);
+  const stepVal = isMl ? 50 : 10;
+  const minVal = isMl ? 50 : 10;
+  return `<div style="background:#f8faff;border-radius:8px;padding:7px 10px;margin-bottom:5px;border:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:10.5px;font-weight:600;flex:1">${entry.foodKey}</span>
+      <input type="number" min="${minVal}" step="${stepVal}" value="${currentAmt}"
+        style="width:65px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:4px 5px;font-size:10.5px"
+        onchange="updateFoodGrams(${kid},${entry.id},this.value)"
+        title="${isMl ? '加水量ml' : '克数'}">
+      <span style="font-size:9.5px;color:var(--muted);font-weight:${isMl?'700':'400'}">${unitLabel}</span>
+      <button class="del-btn" onclick="removeEntry(${kid},${entry.id})">×</button>
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-top:3px">${f.label} · ${isMl?'加水':'当前'}: ${currentAmt}${unitLabel} · ${kcal} kcal</div>
+  </div>`;
+}
+
+function updateFoodGrams(kid, id, grams) {
+  const found = findEntry(kid, id);
+  if (!found || !found.entry.isFood) return;
+  const e = found.entry;
+  const f = FOOD_DB[e.foodKey];
+  const g = parseFloat(grams) || f.defaultG;
+  e.qty = g / f.defaultG;
+  // Scale nutrients proportionally to defaultG (works for both g and ml)
+  const scale = g / f.defaultG;
+  Object.keys(f.n).forEach(k => {
+    e.nutrients[k] = parseFloat((f.n[k] * scale).toFixed(3));
+  });
+  renderEntries(kid);
+}
+
+// Patch renderEntries to handle food items
+const origRenderEntries2 = renderEntries;
+window.renderEntries = function(kid) {
+  const allKeys = [...Object.keys(DRI_NORMAL["1-3"]), "蛋白质(g)", "精氨酸(mg)"];
+
+  function renderSegment(seg) {
+    const container = document.getElementById(`k${kid}-entries-${seg}`);
+    if (!container) return;
+    container.innerHTML = entries[kid][seg].map(entry => {
+    if (entry.isFood) return renderFoodEntry(kid, entry);
+    if (!entry.custom) {
+      // Formula milk: show ml input
+      if (entry.nutrients && entry.nutrients._mlBase) {
+        const base = entry.nutrients._mlBase;
+        const currentMl = Math.round(entry.qty * base);
+        return `<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+          <span style="font-size:10.5px;font-weight:600;padding:5px 7px;background:var(--kid1-light);border-radius:7px;border:1px solid var(--kid1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${entry.name}</span>
+          <input type="number" min="50" step="50" value="${currentMl}"
+            style="width:62px;flex-shrink:0;text-align:center;border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:10.5px"
+            onchange="updatePresetMl(${kid},${entry.id},this.value)" title="加水量ml">
+          <span style="font-size:9.5px;font-weight:700;color:var(--kid1);flex-shrink:0">ml</span>
+          <button class="del-btn" style="flex-shrink:0" onclick="removeEntry(${kid},${entry.id})">×</button>
+        </div>`;
+      }
+      return `<div class="entry-row">
+        <span style="font-size:10.5px;font-weight:600;padding:5px 7px;background:var(--bg);border-radius:7px;border:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry.name}</span>
+        <input type="number" min="0.5" step="0.5" value="${entry.qty}" style="text-align:center"
+          onchange="updateQty(${kid},${entry.id},this.value)" title="份数">
+        <button class="del-btn" onclick="removeEntry(${kid},${entry.id})">×</button>
+      </div>`;
+    }
+    const nutRows = Object.entries(entry.nutrients).map(([k,v])=>`
+      <div class="nut-row">
+        <select onchange="updateNutKey(${kid},${entry.id},'${k}',this.value)">
+          ${allKeys.map(nk=>`<option value="${nk}"${nk===k?' selected':''}>${nk}</option>`).join('')}
+        </select>
+        <input type="number" value="${v}" min="0" step="0.01"
+          onchange="updateNutVal(${kid},${entry.id},'${k}',this.value)" style="text-align:center">
+        <span></span>
+        <button class="del-btn" onclick="removeNut(${kid},${entry.id},'${k}')">×</button>
+      </div>`).join('');
+    return `<div class="custom-box">
+      <div class="entry-row" style="grid-template-columns:1fr 26px;margin-bottom:4px">
+        <input id="en-${kid}-${entry.id}" type="text" placeholder="食物/补充剂名称" value="${entry.name}"
+          onchange="updateName(${kid},${entry.id},this.value)">
+        <button class="del-btn" onclick="removeEntry(${kid},${entry.id})">×</button>
+      </div>
+      ${nutRows}
+      <button class="add-btn" style="margin-top:4px" onclick="addNutRow(${kid},${entry.id})">+ 添加营养素</button>
+    </div>`;
+    }).join('');
+  }
+
+  SEGS.forEach(seg => renderSegment(seg));
+};
+
+
+const SEGS = ['night','home','school'];
+
+
+function shiftDate(kid, delta) {
+  const el = document.getElementById('k' + kid + '-date');
+  if (!el || !el.value) return;
+  // Parse date parts directly to avoid timezone issues
+  const parts = el.value.split('-');
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  d.setDate(d.getDate() + delta);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  const newDate = y + '-' + m + '-' + day;
+  el.value = newDate;
+  loadDateToTracker(kid, newDate);
+  updateRemarkDisplay(kid, newDate);
+}
+
+function selectSeg(kid, seg) {
+  currentAddSeg[kid] = seg;
+  const color = kid === 1 ? 'kid1' : 'kid2';
+  ['night','home','school'].forEach(s => {
+    const btn = document.getElementById(`k${kid}-tab-${s}`);
+    if (!btn) return;
+    btn.className = 'seg-tab' + (s === seg ? ` seg-tab-active-${color}` : '');
+  });
+}
+
+
+function setAddSeg(kid, seg) {
+  currentAddSeg[kid] = seg;
+}
+
+function allEntries(kid) {
+  return [...entries[kid].night, ...entries[kid].home, ...entries[kid].school];
+}
+
+function findEntry(kid, id) {
+  for (const seg of SEGS) {
+    const e = entries[kid][seg].find(e => e.id === id);
+    if (e) return {entry: e, seg};
+  }
+  return null;
+}
+
+function removeEntry(kid, id) {
+  for (const seg of SEGS) {
+    const idx = entries[kid][seg].findIndex(e => e.id === id);
+    if (idx !== -1) { entries[kid][seg].splice(idx, 1); break; }
+  }
+  renderEntries(kid);
+}
+
+
+// ════════════════════════════════════
+// NUTRIENT SOURCE LOOKUP
+// ════════════════════════════════════
+function closeNutrientModal(e) {
+  if (e.target.id === 'nutrient-modal') {
+    document.getElementById('nutrient-modal').classList.remove('open');
+  }
+}
+
+function showNutrientSources(nutrientKey) {
+  // Collect all sources from PRESETS + FOOD_DB
+  const sources = [];
+
+  // From PRESETS
+  Object.entries(PRESETS).filter(([name]) => isActiveProduct(name)).forEach(([name, nuts]) => {
+    const val = nuts[nutrientKey];
+    if (val && val > 0) {
+      const base = nuts._mlBase || null;
+      const unit = base ? `per ${base}ml水` : 'per 推荐量';
+      sources.push({ name, val, unit, type: 'preset' });
+    }
+  });
+
+  // From FOOD_DB
+  Object.entries(FOOD_DB).filter(([name]) => isActiveFood(name)).forEach(([name, food]) => {
+    const val = food.n[nutrientKey];
+    if (val && val > 0) {
+      const amt = food.defaultG;
+      const u = food.unit === 'ml' ? 'ml' : 'g';
+      sources.push({ name, val, unit: `per ${amt}${u}`, type: 'food', defaultG: amt, foodUnit: food.unit });
+    }
+  });
+
+  if (!sources.length) {
+    document.getElementById('modal-title').textContent = `${nutrientKey} — 来源`;
+    document.getElementById('modal-body').innerHTML =
+      '<p style="color:var(--muted);font-size:12px">暂无此营养素的食物/产品数据</p>';
+    document.getElementById('nutrient-modal').classList.add('open');
+    return;
+  }
+
+  // Sort by value descending
+  sources.sort((a, b) => b.val - a.val);
+  const max = sources[0].val;
+
+  // Get DRI for current kid (use kid1 age as reference, or fallback)
+  const ageKey = document.getElementById('k1-age')?.value || '4-6';
+  const dri = getDRI(ageKey);
+  const target = dri[nutrientKey] || null;
+
+  const rows = sources.map(s => {
+    const barW = Math.min(s.val / max * 100, 100);
+    const pctDri = target ? (s.val / target * 100).toFixed(0) + '% DRI' : '';
+    const isPreset = s.type === 'preset';
+    const color = isPreset ? '#6366f1' : '#10b981';
+    const tag = isPreset ? '💊' : '🍴';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+        <span style="font-size:11px;font-weight:600">${tag} ${s.name}</span>
+        <span style="font-size:10px;color:var(--muted)">${s.unit}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${barW}%;background:${color};border-radius:4px"></div>
+        </div>
+        <span style="font-size:11px;font-weight:700;width:55px;text-align:right;color:${color}">${s.val}</span>
+        ${pctDri ? `<span style="font-size:9.5px;color:var(--muted);width:55px">${pctDri}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const driNote = target
+    ? `<div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:6px 10px;background:#f8fafc;border-radius:8px">DRI目标 (${ageKey}岁追高): <b>${target}</b> | 图中% = 占一份的DRI比例</div>`
+    : '';
+
+  document.getElementById('modal-title').textContent = `${nutrientKey} 含量排行`;
+  document.getElementById('modal-body').innerHTML = driNote + rows;
+  document.getElementById('nutrient-modal').classList.add('open');
+}
+
+function copySegTo(fromKid, seg, toKid) {
+  const fromEntries = entries[fromKid][seg];
+  if (!fromEntries.length) { showToast('该板块没有内容', fromKid); return; }
+  const segName = seg === 'night' ? '半夜' : seg === 'home' ? '白天家里' : '白天学校';
+  const targetName = toKid === 1 ? '大宝' : '小宝';
+  if (entries[toKid][seg].length > 0) {
+    const clear = confirm(targetName + '的「' + segName + '」已有内容\n确定 = 清空后复制\n取消 = 追加到现有内容');
+    if (clear) entries[toKid][seg] = [];
+  }
+  fromEntries.forEach(e => {
+    const newId = ++entryId[toKid];
+    entries[toKid][seg].push({...JSON.parse(JSON.stringify(e)), id: newId, seg});
+  });
+  renderEntries(toKid);
+  showToast('✅ 已复制 ' + fromEntries.length + ' 项→' + targetName, toKid);
+}
+
+// Food lib inits lazily on first open
+let foodLibBuilt = false;
+
+// ════════════════════════════════════════════
+// SAVE & HISTORY  (localStorage)
+// ════════════════════════════════════════════
+let currentHistKid = 1;
+
+// Set today's date as default on load
+
+
+
+
+function getAutoRemark(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  const next = new Date(d); next.setDate(d.getDate() + 1);
+  const fmt = dt => (dt.getMonth()+1) + '月' + dt.getDate() + '日';
+  return fmt(d) + ' 早上7am — ' + fmt(next) + ' 早上7am';
+}
+
+function updateRemarkDisplay(kid, dateStr) {
+  const el = document.getElementById('k'+kid+'-remark-display');
+  if (el) el.textContent = getAutoRemark(dateStr);
+}
+
+
+function initDates() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('k1-date').value = today;
+  document.getElementById('k2-date').value = today;
+  updateRemarkDisplay(1, today);
+  updateRemarkDisplay(2, today);
+  selectSeg(1, 'home');
+  selectSeg(2, 'home');
+  // Auto-load today's records if they exist
+  setTimeout(() => {
+    loadDateToTracker(1, today);
+    loadDateToTracker(2, today);
+  }, 100);
+}
+
+function getStorageKey(kid, date) {
+  return 'nutrition_' + kid + '_' + date;
+}
+
+function saveDay(kid) {
+  const date = document.getElementById('k' + kid + '-date').value;
+  if (!date) { alert('请先选择日期'); return; }
+  calculate(kid);
+  _persistDay(kid, date);
+  showToast('✅ ' + date + ' 已保存', kid);
+}
+
+function _persistDay(kid, date) {
+  const ageKey = document.getElementById('k' + kid + '-age').value;
+  const name   = document.getElementById('k' + kid + '-name').value;
+  const totals = {};
+  allEntries(kid).forEach(e => {
+    Object.entries(e.nutrients).forEach(([n, v]) => {
+      if (n === '_mlBase') return;
+      totals[n] = (totals[n] || 0) + v;
+    });
+  });
+  const remark = getAutoRemark(date);
+  const record = {
+    date, kid, name, ageKey,
+    entries: JSON.parse(JSON.stringify(entries[kid])), // segmented
+    totals, remark,
+    savedAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem(getStorageKey(kid, date), JSON.stringify(record));
+  } catch(e) { console.warn('Save failed', e); }
+}
+
+function showToast(msg, kid) {
+  const color = kid === 1 ? 'var(--kid1)' : 'var(--kid2)';
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${color};color:#fff;padding:10px 22px;border-radius:22px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.2);transition:opacity .4s`;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2000);
+}
+
+function loadDay(kid, date) {
+  try {
+    const d = localStorage.getItem(getStorageKey(kid, date));
+    return d ? JSON.parse(d) : null;
+  } catch(e) { return null; }
+}
+
+
+function getAllDates(kid) {
+  const prefix = 'nutrition_' + kid + '_';
+  const dates = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(prefix)) dates.push(k.slice(prefix.length));
+  }
+  return dates.sort().reverse();
+}
+
+// ── History tab ──
+currentHistKid = 1;
+
+function showHistory(kid) {
+  currentHistKid = kid;
+
+  const b1 = document.getElementById('hist-btn-1');
+  const b2 = document.getElementById('hist-btn-2');
+  b1.style.cssText = kid===1
+    ? 'padding:7px 16px;border-radius:20px;border:2px solid var(--kid1);background:var(--kid1);color:#fff;font-size:12px;font-weight:700;cursor:pointer'
+    : 'padding:7px 16px;border-radius:20px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer';
+  b2.style.cssText = kid===2
+    ? 'padding:7px 16px;border-radius:20px;border:2px solid var(--kid2);background:var(--kid2);color:#fff;font-size:12px;font-weight:700;cursor:pointer'
+    : 'padding:7px 16px;border-radius:20px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer';
+
+  const dates  = getAllDates(kid);
+  const cal    = document.getElementById('hist-calendar');
+  const detail = document.getElementById('hist-detail');
+
+  if (!dates.length) {
+    cal.innerHTML = '';
+    detail.innerHTML = '<p style="color:var(--muted);font-size:12px;padding:20px 0">还没有保存的记录。在每日追踪页输入后点击 💾 保存。</p>';
+    return;
+  }
+
+  const kidColor = kid === 1 ? 'var(--kid1)' : 'var(--kid2)';
+  const kidLight = kid === 1 ? 'var(--kid1-light)' : 'var(--kid2-light)';
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Last 60 days
+  const days = [];
+  for (let i = 59; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+
+  cal.innerHTML = days.map(d => {
+    const has = dates.includes(d);
+    const label = d.slice(5);
+    const isToday = d === today;
+    const bg     = has ? kidColor : (isToday ? kidLight : 'var(--bg)');
+    const color  = has ? '#fff'   : (isToday ? kidColor  : 'var(--muted)');
+    const border = isToday ? `2px solid ${kidColor}` : '1px solid var(--border)';
+    const fw     = has ? '700' : '400';
+    const click  = has ? `renderHistDetail(${kid},'${d}')` : '';
+    return `<div onclick="${click}" style="padding:4px 7px;border-radius:7px;font-size:9.5px;font-weight:${fw};cursor:${has?'pointer':'default'};background:${bg};color:${color};border:${border};text-align:center;min-width:38px">${label}${has?'<br>●':''}</div>`;
+  }).join('');
+
+  renderHistDetail(kid, dates[0]);
+}
+
+function renderHistDetail(kid, date) {
+  const record = loadDay(kid, date);
+  const detail = document.getElementById('hist-detail');
+  if (!record) { detail.innerHTML = '<p style="color:var(--muted);font-size:12px">无法读取记录</p>'; return; }
+
+  const dri      = getDRI(record.ageKey);
+  const kidColor = kid === 1 ? 'var(--kid1)' : 'var(--kid2)';
+
+  const savedEnts = record.entries;
+  const flatEnts = Array.isArray(savedEnts)
+    ? savedEnts
+    : [...(savedEnts.night||[]), ...(savedEnts.home||[]), ...(savedEnts.school||[])];
+  const entryHTML = flatEnts.map(e => {
+    const qty = e.qty || 1;
+    let label;
+    if (e.isFood) {
+      const dg = FOOD_DB[e.foodKey] ? FOOD_DB[e.foodKey].defaultG : 100;
+      label = `${e.foodKey}（${Math.round(qty * dg)}g）`;
+    } else {
+      label = e.name + (qty !== 1 ? ` ×${qty}` : '');
+    }
+    return `<li style="font-size:10.5px;padding:2px 0;color:var(--muted)">${label}</li>`;
+  }).join('');
+
+  const barsHTML = Object.entries(dri).map(([n, target]) => {
+    const got = record.totals[n] || 0;
+    if (got === 0) return '';
+    const pct  = (got / target) * 100;
+    const cls  = pct >= 100 ? (pct > 150 ? 'over' : 'ok') : (pct >= 50 ? 'low' : 'vlow');
+    const barC = cls==='ok'?'var(--green)':cls==='low'?'var(--yellow)':cls==='over'?'var(--orange)':'var(--red)';
+    const gap  = got < target ? `缺${(target - got).toFixed(1)}` : '✓';
+    return `<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+      <span style="font-size:10px;font-weight:600;width:105px;flex-shrink:0">${n}</span>
+      <div style="flex:1;height:7px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+        <div style="height:100%;border-radius:4px;background:${barC};width:${Math.min(pct,100)}%"></div>
+      </div>
+      <span style="font-size:9.5px;font-weight:700;width:40px;text-align:right;color:${barC}">${pct.toFixed(0)}%</span>
+      <span style="font-size:9px;color:var(--muted);width:65px;text-align:right">${gap}</span>
+    </div>`;
+  }).join('');
+
+  const savedAt = record.savedAt.slice(0,16).replace('T',' ');
+  detail.innerHTML = `
+    <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:${kidColor}">${record.name} — ${date}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${record.ageKey==='1-3'?'1–3岁':'4–6岁'} · 保存于 ${savedAt}</div>
+        </div>
+        <button onclick="deleteRecord(${kid},'${date}')" style="padding:4px 10px;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:10px;font-weight:600;cursor:pointer">删除</button>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">今日摄入：</div>
+      <ul style="list-style:disc;padding-left:16px;margin-bottom:12px">${entryHTML}</ul>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px">营养素达成：</div>
+      ${barsHTML}
+    </div>`;
+}
+
+function deleteRecord(kid, date) {
+  if (!confirm(`删除 ${date} 的记录？`)) return;
+  localStorage.removeItem(getStorageKey(kid, date));
+  showHistory(kid);
+}
+
+function exportCSV() {
+  const kid   = currentHistKid;
+  const dates = getAllDates(kid);
+  if (!dates.length) { alert('没有记录可导出'); return; }
+
+  const name    = document.getElementById('k'+kid+'-name').value;
+  const nutKeys = Object.keys(DRI_NORMAL['1-3']);
+  let csv = 'Date,Name,AgeGroup,' + nutKeys.join(',') + '\n';
+  dates.forEach(date => {
+    const r = loadDay(kid, date);
+    if (!r) return;
+    csv += [date, r.name, r.ageKey, ...nutKeys.map(k => (r.totals[k]||0).toFixed(2))].join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `${name}_nutrition_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// Auto-save silently on calculate
+const _origCalculate = calculate;
+window.calculate = function(kid) {
+  _origCalculate(kid);
+  const date = document.getElementById('k'+kid+'-date') ? document.getElementById('k'+kid+'-date').value : '';
+  if (date && allEntries(kid).length > 0) _persistDay(kid, date);
+};
+
+
+function loadDateToTracker(kid, date) {
+  if (!date) return;
+
+  // Try loading - also try string version of kid in case saved that way
+  let record = loadDay(kid, date);
+  if (!record) {
+    // Try scanning all keys for this date (handles any kid type mismatch)
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.includes('_' + date) && (k.includes('_' + kid + '_') || k.includes('_' + String(kid) + '_'))) {
+        try { record = JSON.parse(localStorage.getItem(k)); } catch(e) {}
+        break;
+      }
+    }
+  }
+
+  if (!record) {
+    entries[kid] = {night:[], home:[], school:[]};
+    entryId[kid] = 0;
+    renderEntries(kid);
+    document.getElementById('k'+kid+'-results').style.display = 'none';
+  
+  showToast('📅 ' + date + ' 无记录，可新增', kid);
+    return;
+  }
+
+  // Normalize saved entries to segmented format (handles old flat array + new segmented object)
+  const savedEnts = record.entries || [];
+  let rawSegs;
+  if (Array.isArray(savedEnts)) {
+    // Old flat array - put everything in 'home'
+    rawSegs = {night: [], home: savedEnts, school: []};
+  } else {
+    rawSegs = {
+      night:  savedEnts.night  || [],
+      home:   savedEnts.home   || [],
+      school: savedEnts.school || []
+    };
+  }
+
+  function reconstructEntry2(e) {
+    // Custom entries: trust saved nutrients directly
+    if (e.custom) return e;
+
+    // Food lib entries: re-read from FOOD_DB and scale to saved amount
+    if (e.isFood && e.foodKey && FOOD_DB[e.foodKey]) {
+      const f = FOOD_DB[e.foodKey];
+      const savedAmt = e.qty * f.defaultG;
+      const scale = savedAmt / f.defaultG;
+      const nutrients = {};
+      Object.entries(f.n).forEach(([k,v]) => { nutrients[k] = parseFloat((v * scale).toFixed(3)); });
+      return {...e, nutrients, qty: scale};
+    }
+
+    // Preset entries: re-read from PRESETS and scale by qty
+    const pKey = e.presetKey || e.name;
+    const preset = PRESETS[pKey];
+    if (preset) {
+      const qty = e.qty || 1;
+      const nutrients = {};
+      Object.entries(preset).forEach(([k,v]) => {
+        if (k === '_mlBase') { nutrients[k] = v; return; }
+        nutrients[k] = parseFloat((v * qty).toFixed(3));
+      });
+      return {...e, nutrients, qty, presetKey: pKey};
+    }
+
+    // Fallback
+    const hasmlBase = e.nutrients && e.nutrients._mlBase;
+    const qty = e.qty || 1;
+    if (!hasmlBase && qty !== 1) {
+      const nutrients = {};
+      Object.entries(e.nutrients||{}).forEach(([k,v]) => {
+        nutrients[k] = parseFloat((v * qty).toFixed(3));
+      });
+      return {...e, nutrients, qty: 1};
+    }
+    return e;
+  }
+
+  entries[kid] = {
+    night:  rawSegs.night.map(reconstructEntry2),
+    home:   rawSegs.home.map(reconstructEntry2),
+    school: rawSegs.school.map(reconstructEntry2),
+  };
+  const allE = allEntries(kid);
+  entryId[kid] = allE.length > 0 ? Math.max(...allE.map(e => e.id)) : 0;
+
+  // Restore age if saved
+  if (record.ageKey) {
+    document.getElementById('k'+kid+'-age').value = record.ageKey;
+  }
+  // Restore name if saved
+  if (record.name) {
+    document.getElementById('k'+kid+'-name').value = record.name;
+  }
+
+  renderEntries(kid);
+
+  // Calculate and show results
+  if (typeof _origCalculate === 'function') {
+    _origCalculate(kid);
+  } else {
+    calculate(kid);
+  }
+
+  // remark is auto-generated
+  showToast('📅 已载入 ' + date + ' (' + allEntries(kid).length + '项)', kid);
+}
+
+// initDates() called via initWithCloud()
+
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOUD INTEGRATION OVERRIDES
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Override _persistDay to sync to cloud
+const __localPersistDay = _persistDay;
+window._persistDay = async function(kid, date) {
+  __localPersistDay(kid, date);
+  await cloudSaveDay(kid, date, entries[kid]);
+};
+
+// Override loadDateToTracker to try cloud first, then localStorage
+const __localLoadDate = loadDateToTracker;
+window.loadDateToTracker = async function(kid, date) {
+  if (!date) return;
+  let rec = null, src = '📅';
+  const cloud = await cloudLoadDay(kid, date);
+  if (cloud && cloud.log) { rec = cloudToRecord(kid, date, cloud); src = '☁️'; }
+  else rec = loadDay(kid, date);
+  if (!rec) {
+    entries[kid] = {night:[], home:[], school:[]}; entryId[kid] = 0;
+    renderEntries(kid);
+    const res = document.getElementById('k'+kid+'-results'); if (res) res.style.display = 'none';
+    showToast('📅 ' + date + ' 无记录，可新增', kid);
+    return;
+  }
+  rec = recomputeRecord(rec);
+  cacheRecord(kid, date, rec);
+  entries[kid] = rec.entries;
+  entryId[kid] = Math.max(0, ...allEntries(kid).map(e => Number(e.id) || 0));
+  if (rec.ageKey) document.getElementById('k'+kid+'-age').value = rec.ageKey;
+  if (rec.name)   document.getElementById('k'+kid+'-name').value = rec.name;
+  renderEntries(kid);
+  _origCalculate(kid);
+  showToast(src + ' 已载入 ' + date + ' (' + allEntries(kid).length + '项)', kid);
+};
+
+// Override deleteRecord to also delete from cloud
+const __localDeleteRecord = deleteRecord;
+window.deleteRecord = async function(kid, date) {
+  if (!confirm(`删除 ${date} 的记录？`)) return;
+  localStorage.removeItem(getStorageKey(kid, date));
+  await cloudDeleteDay(kid, date);
+  showHistory(kid);
+};
+
+// Override showHistory to merge cloud dates with local
+const __localShowHistory = showHistory;
+window.showHistory = async function(kid) {
+  currentHistKid = kid;
+  // Fetch cloud dates
+  const cloudDates = await cloudListDates(kid);
+  // Merge with local dates
+  const localDates = getAllDates(kid);
+  const merged = [...new Set([...cloudDates, ...localDates])].sort().reverse();
+  _mergedDates[kid] = merged;
+  __localShowHistory_render(kid, merged);
+};
+
+// Store merged dates for use in renderHistDetail
+const _mergedDates = {1:[], 2:[]};
+
+// Wrap __localShowHistory to accept pre-merged dates
+function __localShowHistory_render(kid, dates) {
+  const b1 = document.getElementById('hist-btn-1');
+  const b2 = document.getElementById('hist-btn-2');
+  b1.style.cssText = kid===1
+    ? 'padding:7px 16px;border-radius:20px;border:2px solid var(--kid1);background:var(--kid1);color:#fff;font-size:12px;font-weight:700;cursor:pointer'
+    : 'padding:7px 16px;border-radius:20px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer';
+  b2.style.cssText = kid===2
+    ? 'padding:7px 16px;border-radius:20px;border:2px solid var(--kid2);background:var(--kid2);color:#fff;font-size:12px;font-weight:700;cursor:pointer'
+    : 'padding:7px 16px;border-radius:20px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer';
+
+  const cal    = document.getElementById('hist-calendar');
+  const detail = document.getElementById('hist-detail');
+
+  if (!dates.length) {
+    cal.innerHTML = '';
+    detail.innerHTML = '<p style="color:var(--muted);font-size:12px;padding:20px 0">还没有保存的记录。</p>';
+    return;
+  }
+
+  const kidColor = kid === 1 ? 'var(--kid1)' : 'var(--kid2)';
+  const kidLight = kid === 1 ? 'var(--kid1-light)' : 'var(--kid2-light)';
+  const today = new Date().toISOString().slice(0, 10);
+  const days = [];
+  for (let i = 59; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  cal.innerHTML = days.map(d => {
+    const has = dates.includes(d);
+    const label = d.slice(5);
+    const isToday = d === today;
+    const bg     = has ? kidColor : (isToday ? kidLight : 'var(--bg)');
+    const color  = has ? '#fff'   : (isToday ? kidColor  : 'var(--muted)');
+    const border = isToday ? `2px solid ${kidColor}` : '1px solid var(--border)';
+    const fw     = has ? '700' : '400';
+    const click  = has ? `renderHistDetail(${kid},'${d}')` : '';
+    return `<div onclick="${click}" style="padding:4px 7px;border-radius:7px;font-size:9.5px;font-weight:${fw};cursor:${has?'pointer':'default'};background:${bg};color:${color};border:${border};text-align:center;min-width:38px">${label}${has?'<br>●':''}</div>`;
+  }).join('');
+  if (dates.length) renderHistDetail(kid, dates[0]);
+}
+
+
+// History detail: pull from cloud when this device has no local copy
+const __localRenderHistDetail = renderHistDetail;
+window.renderHistDetail = async function(kid, date) {
+  let rec = null;
+  const cloud = await cloudLoadDay(kid, date);
+  if (cloud && cloud.log) rec = cloudToRecord(kid, date, cloud);
+  else rec = loadDay(kid, date);
+  if (rec) cacheRecord(kid, date, recomputeRecord(rec));
+  __localRenderHistDetail(kid, date);
+};
+
+// ── Cloud sync indicator in version line ───────────────────────────────────
+function updateCloudStatus(status) {
+  const el = document.getElementById('cloud-status');
+  if (el) el.textContent = status;
+}
+
+// ── Boot with auth ─────────────────────────────────────────────────────────
+async function initWithCloud() {
+  updateCloudStatus('🔄 载入参考数据…');
+  const ok = await loadReference();
+  if (!ok) {
+    updateCloudStatus('⚠️ 无法载入');
+    document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;inset:0;background:var(--bg);z-index:1500;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center">
+      <div><div style="font-size:40px">⚠️</div><div style="font-weight:700;margin:8px 0">无法载入营养参考数据</div>
+      <div style="font-size:12px;color:var(--muted)">请检查网络，或确认已在 Supabase 运行 nutrition_schema.sql</div>
+      <button onclick="location.reload()" style="margin-top:14px;padding:10px 22px;border-radius:10px;border:none;background:var(--kid1);color:#fff;font-weight:700">重试</button></div></div>`);
+    return;
+  }
+  initQuick(1); initQuick(2);
+  buildInfoTable();
+  renderComparison();
+  foodLibBuilt = false;
+  initDates();
+  updateCloudStatus(REF._fromCache ? '📦 离线(缓存)' : '☁️ 云端同步');
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REFERENCE DATA (Supabase nutrition_* reference tables)
+// ═══════════════════════════════════════════════════════════════════════════
+const REF = {dri:[], products:[], categories:[], foods:[], compare_rows:[], _fromCache:false};
+const _num = v => (v === null || v === undefined || v === '') ? null : Number(v);
+function isActiveProduct(k) { const p = REF.products.find(x => x.key === k); return !p || p.active !== false; }
+function isActiveFood(k)    { const f = REF.foods.find(x => x.key === k);    return !f || f.active !== false; }
+
+async function loadReference() {
+  let data = null;
+  try {
+    const {data: d, error} = await db.rpc('rpc_nutrition_get_reference', {p_token: getToken()});
+    if (error) throw error;
+    data = d; REF._fromCache = false;
+    localStorage.setItem('nutrition_ref_v1', JSON.stringify(d));
+  } catch(err) {
+    console.warn('[ref] cloud load failed, trying cache', err);
+    try { data = JSON.parse(localStorage.getItem('nutrition_ref_v1') || 'null'); REF._fromCache = true; } catch {}
+  }
+  if (!data || !(data.products || []).length) return false;
+  applyReference(data);
+  return true;
+}
+
+function applyReference(d) {
+  Object.assign(REF, d);
+  [PRESETS, FOOD_DB, FOOD_CATEGORIES, TALL_NOTES].forEach(o => Object.keys(o).forEach(k => delete o[k]));
+  DRI_INFO.length = 0;
+  ['1-3','4-6'].forEach(a => { [DRI_NORMAL, DRI_TALL].forEach(o => Object.keys(o[a]).forEach(k => delete o[a][k])); });
+
+  (d.products || []).forEach(p => {
+    PRESETS[p.key] = {...(p.nutrients || {})};
+    if (_num(p.ml_base)) PRESETS[p.key]._mlBase = _num(p.ml_base);
+  });
+  (d.categories || []).forEach(c => { FOOD_CATEGORIES[c.key] = []; });
+  (d.foods || []).forEach(f => {
+    const n = {...(f.nutrients || {})}, amt = _num(f.default_amount) || 100;
+    const cal = _num(f.kcal_per_100) ?? +(((_num(n['能量(kcal)']) || 0) * 100 / amt).toFixed(1));
+    FOOD_DB[f.key] = {cal, unit: f.unit, defaultG: amt, label: f.serving_label || '', n};
+    if (f.active !== false && FOOD_CATEGORIES[f.category_key]) FOOD_CATEGORIES[f.category_key].push(f.key);
+  });
+  const tracked = (d.dri || []).filter(r => r.tracked !== false);
+  tracked.forEach(r => {
+    const k = r.nutrient_key, n13 = _num(r.normal_13), n46 = _num(r.normal_46);
+    if (n13 !== null) DRI_NORMAL['1-3'][k] = n13;
+    if (n46 !== null) DRI_NORMAL['4-6'][k] = n46;
+    if (n13 !== null || n46 !== null) DRI_INFO.push({n: k, v13: n13, v46: n46, src: r.src || ''});
+    if (r.tall_note) TALL_NOTES[k] = r.tall_note;
+  });
+  ['1-3','4-6'].forEach(a => Object.assign(DRI_TALL[a], DRI_NORMAL[a]));
+  tracked.forEach(r => {
+    const t13 = _num(r.tall_13), t46 = _num(r.tall_46);
+    if (t13 !== null) DRI_TALL['1-3'][r.nutrient_key] = t13;
+    if (t46 !== null) DRI_TALL['4-6'][r.nutrient_key] = t46;
+  });
+}
+
+// ── Rebuild a saved entry's nutrients from the LATEST reference values ──
+function _scaleN(n, s) { const o = {}; for (const [k,v] of Object.entries(n)) if (k !== '_mlBase') o[k] = parseFloat((v*s).toFixed(3)); return o; }
+function entryAmount(e) {
+  if (e.isFood && e.foodKey && FOOD_DB[e.foodKey]) return (Number(e.qty)||1) * FOOD_DB[e.foodKey].defaultG;
+  const pr = PRESETS[e.presetKey || e.name];
+  if (pr && pr._mlBase) return (Number(e.qty)||1) * pr._mlBase;
+  return null;
+}
+function rebuildEntry(e) {
+  if (e.custom) return {...e, nutrients: e.nutrients || {}};
+  if (e.isFood && e.foodKey && FOOD_DB[e.foodKey]) {
+    const f = FOOD_DB[e.foodKey];
+    const amt = _num(e.amount) ?? (Number(e.qty)||1) * f.defaultG;
+    const qty = amt / f.defaultG;
+    return {...e, qty, foodDefaultG: f.defaultG, nutrients: _scaleN(f.n, qty)};
+  }
+  const pk = e.presetKey || e.name, pr = PRESETS[pk];
+  if (pr) {
+    const qty = (pr._mlBase && _num(e.amount) !== null) ? _num(e.amount) / pr._mlBase : (Number(e.qty)||1);
+    const nutrients = _scaleN(pr, qty);
+    if (pr._mlBase) nutrients._mlBase = pr._mlBase;
+    return {...e, presetKey: pk, qty, isFormula: !!pr._mlBase, nutrients};
+  }
+  return e;   // item no longer in reference data → keep the nutrients saved with it
+}
+function normalizeSegs(ents) {
+  if (Array.isArray(ents)) return {night: [], home: ents, school: []};
+  return {night: (ents||{}).night || [], home: (ents||{}).home || [], school: (ents||{}).school || []};
+}
+function recomputeRecord(rec) {
+  const segs = normalizeSegs(rec.entries);
+  const rebuilt = {};
+  SEGS.forEach(s => { rebuilt[s] = segs[s].map(e => rebuildEntry({...e, seg: s})); });
+  const totals = {};
+  SEGS.forEach(s => rebuilt[s].forEach(e => Object.entries(e.nutrients || {}).forEach(([k,v]) => {
+    if (k !== '_mlBase') totals[k] = (totals[k] || 0) + v; })));
+  return {...rec, entries: rebuilt, totals};
+}
+function cloudToRecord(kid, date, d) {
+  const segs = {night: [], home: [], school: []};
+  (d.entries || []).forEach(e => (segs[e.seg] || segs.home).push({
+    id: Number(e.entry_id) || e.entry_id, name: e.entry_name, seg: e.seg,
+    isFood: e.is_food, custom: e.is_custom, foodKey: e.food_key, presetKey: e.preset_key,
+    qty: _num(e.qty) ?? 1, amount: _num(e.amount), nutrients: e.nutrients || {} }));
+  return {date, kid, name: d.log.kid_name, ageKey: d.log.age_key, entries: segs,
+          totals: {}, remark: d.log.remark, savedAt: d.log.saved_at};
+}
+function cacheRecord(kid, date, rec) {
+  try { localStorage.setItem(getStorageKey(kid, date), JSON.stringify(rec)); } catch(e) {}
+}
+
+// ── CSV export: every saved day (cloud + local), recomputed with latest values ──
+window.exportCSV = async function() {
+  const kid = currentHistKid;
+  const byDate = {};
+  getAllDates(kid).forEach(dt => { const r = loadDay(kid, dt); if (r) byDate[dt] = r; });
+  try {
+    const {data, error} = await db.rpc('rpc_nutrition_load_days', {p_token: getToken(), p_kid: kid});
+    if (error) throw error;
+    (data || []).forEach(d => { byDate[d.log.log_date] = cloudToRecord(kid, d.log.log_date, d); });
+  } catch(err) { console.warn('[csv] cloud load failed, exporting local only', err); }
+  const dates = Object.keys(byDate).sort().reverse();
+  if (!dates.length) { alert('没有记录可导出'); return; }
+  const keys = [...new Set([...Object.keys(DRI_NORMAL['4-6']), ...Object.keys(DRI_TALL['4-6'])])];
+  let csv = '\uFEFFDate,Name,AgeGroup,' + keys.join(',') + '\n';
+  dates.forEach(dt => {
+    const r = recomputeRecord(byDate[dt]);
+    csv += [dt, r.name, r.ageKey, ...keys.map(k => (r.totals[k] || 0).toFixed(2))].join(',') + '\n';
+  });
+  const name = document.getElementById('k'+kid+'-name').value;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+  a.download = `${name}_nutrition_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ── 产品对比 tab, generated from nutrition_products / nutrition_dri / nutrition_compare_rows ──
+function _esc(s) { return String(s ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+function renderComparison() {
+  const root = document.getElementById('cmp-root'); if (!root) return;
+  const prods = REF.products.filter(p => p.active !== false);
+  const dri = Object.fromEntries(REF.dri.map(r => [r.nutrient_key, r]));
+  const nCols = 3 + prods.length * 2;
+  const badge = pct => `<span class="cp ${pct > 150 ? 'o' : pct >= 100 ? 'h' : pct >= 50 ? 'm' : 'l'}">${pct.toFixed(0)}%</span>`;
+  const empty = '<td class="na">—</td><td><span class="cp x">—</span></td>';
+  const prep = g => prods.filter(p => p.product_group === g)
+    .map(p => `<div class="prep-card ${_esc(p.prep_class)}">${_esc(p.prep_note || p.key)}</div>`).join('');
+
+  let thead = `<thead><tr><th class="th-n" rowspan="2">营养素</th><th class="th-d1">DRI<br>1–3岁</th><th class="th-d2">DRI<br>4–6岁</th>`
+    + prods.map(p => `<th class="${_esc(p.compare_class)}" colspan="2">${_esc(p.compare_header || p.key)}<br><small>${_esc(p.compare_sub)}</small></th>`).join('')
+    + `</tr><tr><th class="th-d1">量</th><th class="th-d2">量</th>`
+    + prods.map(p => `<th class="${_esc(p.compare_class)}">含量</th><th class="${_esc(p.compare_class)}">%DRI1/2</th>`).join('')
+    + `</tr></thead>`;
+
+  let body = '', lastSec = null;
+  const champs = [];
+  REF.compare_rows.forEach(r => {
+    if (r.section !== lastSec) { body += `<tr class="sec"><td colspan="${nCols}">${_esc(r.section)}</td></tr>`; lastSec = r.section; }
+    const d = dri[r.ref_key] || {}, d13 = _num(d.normal_13), d46 = _num(d.normal_46);
+    const label = _esc(r.label) + (r.hint ? `<br><small>${_esc(r.hint)}</small>` : '');
+    let cells = '';
+    if (r.kind === 'nutrient') {
+      const vals = prods.map(p => _num((p.nutrients || {})[r.ref_key]) || 0);
+      const max = Math.max(...vals), withVal = vals.filter(v => v > 0).length;
+      cells = vals.map(v => {
+        if (!v) return empty;
+        const crown = (v === max && withVal > 1) ? ' 🏆' : '';
+        const pct = d13 ? `${badge(v/d13*100)}<br>${badge(v/(d46||d13)*100)}` : '<span class="cp x">参考</span>';
+        return `<td><span class="cv">${v}${crown}</span></td><td>${pct}</td>`;
+      }).join('');
+      if (withVal > 1 && ['DHA(mg)','钙Ca(mg)','铁Fe(mg)','VitD(µg)','VitC(mg)','蛋白质(g)'].includes(r.ref_key)) {
+        const top = prods[vals.indexOf(max)];
+        champs.push(`${_esc(r.label)}：${_esc(top.compare_header || top.key)} <strong>${max}${d13 ? `（${(max/d13*100).toFixed(0)}% of 1–3岁）` : ''}</strong> 🏆`);
+      }
+    } else if (r.kind === 'text') {
+      cells = prods.map(p => {
+        const x = (p.extras || {})[r.ref_key];
+        if (!x) return empty;
+        const [v, tag] = Array.isArray(x) ? x : [x, '参考'];
+        return `<td><span class="cv">${_esc(v)}</span></td><td><span class="cp x">${_esc(tag)}</span></td>`;
+      }).join('');
+    } else {
+      cells = prods.map(p => `<td colspan="2">${_esc((p.extras || {})[r.ref_key] || '—')}</td>`).join('');
+    }
+    body += `<tr><td>${label}</td><td class="d1">${d13 ?? '—'}</td><td class="d2">${d46 ?? '—'}</td>${cells}</tr>`;
+  });
+
+  root.innerHTML = `
+    <h2>🍼 第一部分：奶粉（200ml水冲泡）</h2><div class="prep-box">${prep('milk')}</div>
+    <h2>💊 第二部分：补充剂（每份含量）</h2><div class="prep-box">${prep('supp')}</div>
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:#15803d"></div>绿 ≥100%</div>
+      <div class="legend-item"><div class="dot" style="background:#ca8a04"></div>黄 50–99%</div>
+      <div class="legend-item"><div class="dot" style="background:#b91c1c"></div>红 &lt;50%</div>
+      <div class="legend-item"><div class="dot" style="background:#f97316"></div>橙 &gt;150%</div>
+      <span style="color:#94a3b8;font-size:10px">— = 标签未列 · DRI1=1–3岁 · DRI2=4–6岁 · 🏆 = 该项最高</span>
+    </div>
+    <div class="table-wrap"><table>${thead}<tbody>${body}</tbody></table></div>
+    <div class="note"><strong>📊 各项冠军（每份，基于普通模式DRI）：</strong><br>${champs.join('<br>')}</div>`;
+}
+
+async function bootWithAuth() {
+  const stored = localStorage.getItem('loginToken');
+  if (stored) {
+    const valid = await validateLoginToken(stored);
+    if (valid) { initWithCloud(); return; }
+    localStorage.removeItem('loginToken');
+    showLoginPrompt('令牌已过期，请重新输入。');
+    return;
+  }
+  // No token — check if we have local data to allow offline use
+  // Still show login to get cloud token
+  showLoginPrompt();
+}
+
+bootWithAuth();
+</script>
+</body>
+</html>
