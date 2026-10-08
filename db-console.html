@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DB Console">
+<title>DB Console</title>
+<style>
+:root{
+  --bg:#F3F6F5;--surface:#FFFFFF;--ink:#15201C;--muted:#5D6B65;--line:#D9E2DE;
+  --accent:#1F9D68;--on-accent:#FFFFFF;--danger:#C2412D;--soft:#E7F4EE;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E1412;--surface:#17201C;--ink:#E4EEE9;--muted:#93A39C;--line:#2A3531;
+  --accent:#3ECF8E;--on-accent:#0E1412;--danger:#F0715C;--soft:#1B2E26;}}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--sans)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:.55em 1em;font-weight:600;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.ghost{background:transparent;color:var(--accent);padding:.55em .5em}
+button.danger{color:var(--danger)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,textarea,select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.6em .75em}
+.wrap{max-width:960px;margin:0 auto;padding:12px 16px 40px}
+.screen[hidden],[hidden]{display:none!important}
+
+/* login */
+#login .wrap{max-width:420px;padding-top:18vh}
+#login h1{font-size:2rem;letter-spacing:-.02em;margin:0 0 .2em}
+#login p{color:var(--muted);margin:0 0 1.2em}
+#login button{width:100%;margin-top:10px}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand strong{font-size:1.35rem;letter-spacing:-.02em;display:block}
+.brand span{color:var(--muted);font:12px var(--mono)}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;margin:12px 0 14px}
+.seg button{flex:1;background:transparent;color:var(--muted);border-radius:9px}
+.seg button.on{background:var(--soft);color:var(--ink)}
+
+.bar{display:flex;align-items:center;gap:8px;margin:10px 0}
+.bar h2,.bar h3{flex:1;margin:0;font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg{color:var(--muted);font-size:14px;min-height:1.2em;margin:6px 0;white-space:pre-wrap}
+.msg.err{color:var(--danger)}
+
+/* table list */
+.tlist{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tlist li+li{border-top:1px solid var(--line)}
+.tlist button{width:100%;display:flex;justify-content:space-between;align-items:baseline;background:transparent;color:var(--ink);border-radius:0;padding:.8em 1em;text-align:left;font-weight:500}
+.tlist small{color:var(--muted);font-weight:400}
+
+/* grid */
+.grid{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.grid:empty{display:none}
+.grid table{border-collapse:collapse;font:13px/1.35 var(--mono);min-width:100%}
+.grid th{position:sticky;top:0;background:var(--soft);text-align:left;font-weight:600;padding:8px 10px;white-space:nowrap;border-bottom:1px solid var(--line)}
+.grid td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;max-width:280px;overflow:hidden;text-overflow:ellipsis}
+.grid.clickable tbody tr{cursor:pointer}
+.grid.clickable tbody tr:active{background:var(--soft)}
+.nul{color:var(--muted);font-style:italic}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--muted);font-size:14px}
+
+/* sql */
+#sqlIn{font:14px/1.5 var(--mono);min-height:9em;resize:vertical}
+#hist{width:auto;flex:1;min-width:0}
+
+/* dialogs */
+dialog{border:0;padding:0;background:var(--surface);color:var(--ink);border-radius:16px;width:min(560px,94vw);max-height:88vh}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.sheet{padding:14px 16px;overflow:auto;max-height:88vh}
+.field{margin:12px 0}
+.fl{display:block;font-size:14px;margin-bottom:4px}
+.fl em{color:var(--muted);font-style:normal;font-family:var(--mono);font-size:12px}
+.field textarea{font:13px/1.4 var(--mono)}
+.nullchk{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin-top:4px}
+.nullchk input{width:auto}
+#vpre{font:12px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word;margin:0}
+</style>
+</head>
+<body>
+
+<div id="login" class="screen">
+  <div class="wrap">
+    <h1>DB Console</h1>
+    <p>Enter your login token to open the database.</p>
+    <input id="tok" type="password" autocomplete="current-password" placeholder="Login token">
+    <button id="loginBtn">Open database</button>
+    <div id="lmsg" class="msg"></div>
+  </div>
+</div>
+
+<div id="app" class="screen" hidden>
+  <div class="wrap">
+    <header>
+      <div class="brand"><strong>DB Console</strong><span id="proj"></span></div>
+      <button id="logout" class="ghost">Log out</button>
+    </header>
+    <nav class="seg">
+      <button data-tab="tables" class="on">Tables</button>
+      <button data-tab="sql">SQL</button>
+    </nav>
+
+    <section id="tab-tables">
+      <div id="tableList"></div>
+      <div id="tableView" hidden>
+        <div class="bar">
+          <button id="back" class="ghost">‹ Tables</button>
+          <h2 id="tname"></h2>
+          <button id="addRow">Add row</button>
+        </div>
+        <input id="filter" placeholder="Filter, e.g. bank = 'UOB'  (press Enter)" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div id="tmsg" class="msg"></div>
+        <div id="tgrid" class="grid"></div>
+        <div class="pager">
+          <button id="prev" class="ghost">Previous</button>
+          <span id="pinfo"></span>
+          <button id="next" class="ghost">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-sql" hidden>
+      <textarea id="sqlIn" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="select * from cards limit 20"></textarea>
+      <div class="bar">
+        <select id="hist"><option value="">Recent queries</option></select>
+        <button id="run">Run</button>
+      </div>
+      <div id="smsg" class="msg"></div>
+      <div id="sgrid" class="grid"></div>
+    </section>
+  </div>
+</div>
+
+<dialog id="editor">
+  <div class="sheet">
+    <div class="bar"><h3 id="etitle"></h3><button id="eclose" class="ghost">Close</button></div>
+    <div id="efields"></div>
+    <div id="emsg" class="msg"></div>
+    <div class="bar">
+      <button id="edelete" class="ghost danger">Delete row</button>
+      <span style="flex:1"></span>
+      <button id="esave">Save changes</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="viewer">
+  <div class="sheet">
+    <div class="bar"><h3>Row</h3><button id="vclose" class="ghost">Close</button></div>
+    <pre id="vpre"></pre>
+  </div>
+</dialog>
+
+<script>
+/* ---------- config ---------- */
+const SUPABASE_URL = 'https://zppigksbqpfdmtxgswiz.supabase.co';
+const ANON_KEY     = 'PASTE_YOUR_ANON_KEY_HERE';   // swap in the same (obfuscated) anon key you use in sgcashback
+const RPC          = 'rpc_admin_sql';
+const PAGE = 50, TK = 'dbx_token', HK = 'dbx_hist';
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const state = { token:null, t:null, cols:[], pk:[], offset:0, rows:[], edit:null };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const qi  = s => '"' + String(s).replace(/"/g,'""') + '"';
+const ql  = v => v === null ? 'NULL' : "'" + String(v).replace(/'/g,"''") + "'";
+const msg = (el, t, err) => { el.textContent = t || ''; el.className = 'msg' + (err ? ' err' : ''); };
+const store = { get:k=>{try{return localStorage.getItem(k)}catch{return null}},
+                set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}},
+                del:k=>{try{localStorage.removeItem(k)}catch{}} };
+
+async function sql(q){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${RPC}`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', apikey:ANON_KEY, Authorization:'Bearer '+ANON_KEY },
+    body: JSON.stringify({ p_token: state.token, p_sql: q })
+  });
+  const d = await r.json().catch(() => null);
+  if (!r.ok) throw new Error((d && (d.message + (d.hint ? '\nHint: ' + d.hint : ''))) || `Request failed (HTTP ${r.status})`);
+  return d;
+}
+
+function cell(v){
+  if (v === null || v === undefined) return '<span class="nul">null</span>';
+  if (typeof v === 'object') v = JSON.stringify(v);
+  v = String(v);
+  return esc(v.length > 80 ? v.slice(0,80) + '…' : v);
+}
+
+function grid(el, rows, cols, onClick){
+  cols = cols || (rows[0] ? Object.keys(rows[0]) : []);
+  if (!cols.length) { el.innerHTML = ''; return; }
+  let h = '<table><thead><tr>' + cols.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach((r,i) => { h += `<tr data-i="${i}">` + cols.map(c => `<td>${cell(r[c])}</td>`).join('') + '</tr>'; });
+  el.innerHTML = h + '</tbody></table>';
+  el.classList.toggle('clickable', !!onClick);
+  if (onClick) el.querySelectorAll('tbody tr').forEach(tr => tr.onclick = () => onClick(rows[+tr.dataset.i]));
+}
+
+/* ---------- login ---------- */
+async function login(tok){
+  state.token = tok;
+  await sql('select 1 as ok');
+  store.set(TK, tok);
+  $('#login').hidden = true; $('#app').hidden = false;
+  $('#proj').textContent = SUPABASE_URL.replace('https://','').split('.')[0];
+  loadTables(); renderHist();
+}
+$('#loginBtn').onclick = async () => {
+  const t = $('#tok').value.trim(); if (!t) return;
+  if (ANON_KEY.startsWith('PASTE')) return msg($('#lmsg'), 'Add your Supabase anon key to ANON_KEY at the top of the script first.', true);
+  msg($('#lmsg'), 'Checking…');
+  try { await login(t); } catch(e){ state.token = null; msg($('#lmsg'), e.message, true); }
+};
+$('#tok').onkeydown = e => { if (e.key === 'Enter') $('#loginBtn').click(); };
+$('#logout').onclick = () => { store.del(TK); state.token = null; $('#app').hidden = true; $('#login').hidden = false; $('#tok').value = ''; };
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x === b));
+  $('#tab-tables').hidden = b.dataset.tab !== 'tables';
+  $('#tab-sql').hidden    = b.dataset.tab !== 'sql';
+});
+
+/* ---------- tables ---------- */
+async function loadTables(){
+  const el = $('#tableList');
+  el.innerHTML = '<p class="msg">Loading tables…</p>';
+  try {
+    const d = await sql(`select c.relname as name, c.reltuples::bigint as est
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind in ('r','p') order by 1`);
+    if (!d.rows.length) { el.innerHTML = '<p class="msg">No tables in the public schema yet. Create one from the SQL tab.</p>'; return; }
+    el.innerHTML = '<ul class="tlist">' + d.rows.map(r =>
+      `<li><button data-t="${esc(r.name)}"><span>${esc(r.name)}</span><small>${r.est >= 0 ? 'about ' + r.est + ' rows' : ''}</small></button></li>`
+    ).join('') + '</ul>';
+    el.querySelectorAll('button').forEach(b => b.onclick = () => openTable(b.dataset.t));
+  } catch(e){ el.innerHTML = ''; const p = document.createElement('p'); el.append(p); msg(p, e.message, true); }
+}
+
+async function openTable(t){
+  Object.assign(state, { t, offset:0, cols:[], pk:[] });
+  $('#tableList').hidden = true; $('#tableView').hidden = false;
+  $('#tname').textContent = t; $('#filter').value = ''; $('#tgrid').innerHTML = '';
+  msg($('#tmsg'), 'Loading…');
+  try {
+    const [m, k] = await Promise.all([
+      sql(`select column_name, data_type, is_nullable, column_default from information_schema.columns
+           where table_schema = 'public' and table_name = ${ql(t)} order by ordinal_position`),
+      sql(`select a.attname as col from pg_index i
+           join pg_attribute a on a.attrelid = i.indrelid and a.attnum = any(i.indkey)
+           where i.indrelid = ${ql('public.' + qi(t))}::regclass and i.indisprimary`)
+    ]);
+    state.cols = m.rows; state.pk = k.rows.map(r => r.col);
+    loadRows();
+  } catch(e){ msg($('#tmsg'), e.message, true); }
+}
+
+async function loadRows(){
+  const f = $('#filter').value.trim();
+  const ord = state.pk.length ? ' order by ' + state.pk.map(qi).join(', ') : '';
+  msg($('#tmsg'), 'Loading…');
+  try {
+    const d = await sql(`select * from public.${qi(state.t)}${f ? ' where ' + f : ''}${ord} limit ${PAGE + 1} offset ${state.offset}`);
+    const more = d.rows.length > PAGE;
+    state.rows = d.rows.slice(0, PAGE);
+    grid($('#tgrid'), state.rows, state.cols.map(c => c.column_name), state.pk.length ? openEditor : viewRow);
+    $('#pinfo').textContent = state.rows.length ? `${state.offset + 1}–${state.offset + state.rows.length}` : 'No rows';
+    $('#prev').disabled = state.offset === 0; $('#next').disabled = !more;
+    msg($('#tmsg'), state.pk.length ? 'Tap a row to edit it.' : 'This table has no primary key, so rows are read-only here. Use the SQL tab to change them.');
+  } catch(e){ msg($('#tmsg'), e.message, true); }
+}
+
+$('#back').onclick = () => { $('#tableView').hidden = true; $('#tableList').hidden = false; loadTables(); };
+$('#filter').onkeydown = e => { if (e.key === 'Enter') { state.offset = 0; loadRows(); } };
+$('#prev').onclick = () => { state.offset = Math.max(0, state.offset - PAGE); loadRows(); };
+$('#next').onclick = () => { state.offset += PAGE; loadRows(); };
+$('#addRow').onclick = () => openEditor(null);
+
+/* ---------- row editor ---------- */
+function openEditor(row){
+  state.edit = row;
+  $('#etitle').textContent = row ? 'Edit row' : 'New row in ' + state.t;
+  $('#edelete').hidden = !row;
+  $('#esave').textContent = row ? 'Save changes' : 'Add row';
+  msg($('#emsg'), row ? '' : 'Fields you leave blank use the column default.');
+  $('#efields').innerHTML = state.cols.map((c,i) => {
+    const v = row ? row[c.column_name] : undefined;
+    const txt = v === null || v === undefined ? '' : (typeof v === 'object' ? JSON.stringify(v, null, 1) : String(v));
+    const big = /json|text|ARRAY|character/.test(c.data_type) && (txt.length > 40 || txt.includes('\n'));
+    const ph  = !row && c.column_default ? 'default: ' + c.column_default : '';
+    const key = state.pk.includes(c.column_name) ? ' (key)' : '';
+    return `<div class="field" data-i="${i}">
+      <span class="fl"><b>${esc(c.column_name)}</b> <em>${esc(c.data_type)}${key}</em></span>
+      ${big ? `<textarea rows="4" spellcheck="false">${esc(txt)}</textarea>`
+            : `<input value="${esc(txt)}" placeholder="${esc(ph)}" autocapitalize="off" autocorrect="off" spellcheck="false">`}
+      ${c.is_nullable === 'YES' ? `<label class="nullchk"><input type="checkbox" ${row && v === null ? 'checked' : ''}> null</label>` : ''}
+    </div>`;
+  }).join('');
+  $('#editor').showModal();
+}
+const markDirty = e => { const f = e.target.closest('.field'); if (f) f.dataset.dirty = '1'; };
+$('#efields').addEventListener('input', markDirty);
+$('#efields').addEventListener('change', markDirty);
+$('#eclose').onclick = () => $('#editor').close();
+
+function lit(c, v){
+  if (v === null) return 'NULL';
+  if (c.data_type === 'ARRAY' && v.trim().startsWith('[')) {
+    try {
+      const a = JSON.parse(v);
+      return ql('{' + a.map(x => x === null ? 'NULL'
+        : '"' + String(typeof x === 'object' ? JSON.stringify(x) : x).replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"').join(',') + '}');
+    } catch {}
+  }
+  return ql(v);
+}
+const whereRow = r => state.pk.map(k => r[k] === null ? `${qi(k)} is null`
+  : `${qi(k)} = ${ql(typeof r[k] === 'object' ? JSON.stringify(r[k]) : r[k])}`).join(' and ');
+
+$('#esave').onclick = async () => {
+  const row = state.edit, sets = [];
+  $('#efields').querySelectorAll('.field').forEach(f => {
+    const c = state.cols[+f.dataset.i];
+    const nul = f.querySelector('input[type=checkbox]')?.checked;
+    const val = f.querySelector('textarea, input:not([type=checkbox])').value;
+    if (row) { if (f.dataset.dirty) sets.push([c, nul ? null : val]); }
+    else if (nul) sets.push([c, null]);
+    else if (val !== '') sets.push([c, val]);
+  });
+  if (row && !sets.length) return msg($('#emsg'), 'Nothing changed.');
+  const T = 'public.' + qi(state.t);
+  const q = row
+    ? `update ${T} set ${sets.map(([c,v]) => qi(c.column_name) + ' = ' + lit(c,v)).join(', ')} where ${whereRow(row)} returning *`
+    : sets.length
+      ? `insert into ${T} (${sets.map(([c]) => qi(c.column_name)).join(', ')}) values (${sets.map(([c,v]) => lit(c,v)).join(', ')}) returning *`
+      : `insert into ${T} default values returning *`;
+  msg($('#emsg'), 'Saving…');
+  try { await sql(q); $('#editor').close(); loadRows(); }
+  catch(e){ msg($('#emsg'), e.message, true); }
+};
+
+$('#edelete').onclick = async () => {
+  if (!confirm("Delete this row? This can't be undone.")) return;
+  try {
+    const d = await sql(`delete from public.${qi(state.t)} where ${whereRow(state.edit)} returning *`);
+    if (!d.rows.length) return msg($('#emsg'), 'No row was deleted. It may have been changed elsewhere; reload and try again.', true);
+    $('#editor').close(); loadRows();
+  } catch(e){ msg($('#emsg'), e.message, true); }
+};
+
+/* ---------- row viewer ---------- */
+function viewRow(r){ $('#vpre').textContent = JSON.stringify(r, null, 2); $('#viewer').showModal(); }
+$('#vclose').onclick = () => $('#viewer').close();
+
+/* ---------- SQL tab ---------- */
+async function runSql(){
+  const q = $('#sqlIn').value.trim(); if (!q) return;
+  if (/^\s*(drop|truncate|alter|delete|update)\b/i.test(q) && !confirm('This statement changes data or structure. Run it?')) return;
+  msg($('#smsg'), 'Running…'); $('#sgrid').innerHTML = '';
+  const t0 = performance.now();
+  try {
+    const d = await sql(q), ms = Math.round(performance.now() - t0);
+    if (d.rows) {
+      grid($('#sgrid'), d.rows, null, viewRow);
+      msg($('#smsg'), `${d.rows.length} row${d.rows.length === 1 ? '' : 's'} in ${ms} ms` + (d.rows.length ? '. Tap a row to see it in full.' : ''));
+    } else {
+      msg($('#smsg'), `Done. ${d.rowCount} row${d.rowCount === 1 ? '' : 's'} affected in ${ms} ms.`);
+    }
+    saveHist(q);
+  } catch(e){ msg($('#smsg'), e.message, true); }
+}
+$('#run').onclick = runSql;
+$('#sqlIn').onkeydown = e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); runSql(); } };
+
+function getHist(){ try { return JSON.parse(store.get(HK)) || []; } catch { return []; } }
+function saveHist(q){ store.set(HK, JSON.stringify([q, ...getHist().filter(x => x !== q)].slice(0, 20))); renderHist(); }
+function renderHist(){
+  $('#hist').innerHTML = '<option value="">Recent queries</option>' +
+    getHist().map((q,i) => `<option value="${i}">${esc(q.replace(/\s+/g,' ').slice(0,60))}</option>`).join('');
+}
+$('#hist').onchange = e => { const h = getHist()[e.target.value]; if (h) $('#sqlIn').value = h; e.target.value = ''; };
+
+/* ---------- start ---------- */
+(async () => {
+  const saved = store.get(TK);
+  if (saved && !ANON_KEY.startsWith('PASTE')) {
+    try { await login(saved); } catch { store.del(TK); state.token = null; }
+  }
+})();
+</script>
+</body>
+</html>
