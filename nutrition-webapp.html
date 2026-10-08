@@ -254,6 +254,20 @@ body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:var(--bg);
 
 html, body { overflow-x: hidden; }
 * { box-sizing: border-box; }
+
+/* ── Mobile kid switch: one child at a time ── */
+.kid-switch{display:none}
+@media(max-width:680px){
+  .kid-switch{display:flex;gap:6px;position:sticky;top:var(--tabbar-h,44px);z-index:90;
+    padding:8px 10px;background:var(--bg);border-bottom:1px solid var(--border)}
+  .ks-btn{flex:1;padding:9px 0;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);
+    color:var(--muted);font-size:14px;font-weight:700;cursor:pointer}
+  .ks-btn:focus-visible{outline:2px solid var(--kid1);outline-offset:2px}
+  .ks-active-1{background:var(--kid1);border-color:var(--kid1);color:#fff}
+  .ks-active-2{background:var(--kid2);border-color:var(--kid2);color:#fff}
+  .tracker-layout.show-1 #k2-panel{display:none}
+  .tracker-layout.show-2 #k1-panel{display:none}
+}
 </style>
 </head>
 <body>
@@ -303,7 +317,11 @@ DRI来源：新加坡HPB官方RDA 2022 + IOM | 1–3岁大宝列 / 4–6岁小�
     <h1>每日营养追踪</h1>
     <p>记录今天吃了什么，自动计算每种营养素摄入量和缺口</p>
   </div>
-  <div class="tracker-layout">
+  <div class="kid-switch" id="kid-switch" role="tablist" aria-label="选择孩子">
+    <button id="kid-switch-1" class="ks-btn ks-active-1" role="tab" aria-selected="true" onclick="showKid(1)">👦 <span id="ks-name-1">大宝</span></button>
+    <button id="kid-switch-2" class="ks-btn" role="tab" aria-selected="false" onclick="showKid(2)">👧 <span id="ks-name-2">小宝</span></button>
+  </div>
+  <div class="tracker-layout show-1" id="tracker-layout">
     <!-- KID 1 -->
     <div class="kid-panel" id="k1-panel">
       <div class="kid-header k1">
@@ -1386,6 +1404,7 @@ function copySegTo(fromKid, seg, toKid) {
   });
   renderEntries(toKid);
   showToast('✅ 已复制 ' + fromEntries.length + ' 项→' + targetName, toKid);
+  if (window.matchMedia && window.matchMedia('(max-width:680px)').matches) showKid(toKid);
 }
 
 // Food lib inits lazily on first open
@@ -1783,6 +1802,7 @@ window.loadDateToTracker = async function(kid, date) {
   entryId[kid] = Math.max(0, ...allEntries(kid).map(e => Number(e.id) || 0));
   if (rec.ageKey) document.getElementById('k'+kid+'-age').value = rec.ageKey;
   if (rec.name)   document.getElementById('k'+kid+'-name').value = rec.name;
+  { const lab = document.getElementById('ks-name-'+kid); if (lab && rec.name) lab.textContent = rec.name; }
   renderEntries(kid);
   _origCalculate(kid);
   showToast(src + ' 已载入 ' + date + ' (' + allEntries(kid).length + '项)', kid);
@@ -1891,6 +1911,7 @@ async function initWithCloud() {
   renderComparison();
   foodLibBuilt = false;
   initDates();
+  try { initKidSwitch(); } catch(e) { console.warn('[kid switch]', e); }
   updateCloudStatus(REF._fromCache ? '📦 离线(缓存)' : '☁️ 云端同步');
 }
 
@@ -2095,6 +2116,42 @@ function renderComparison() {
     </div>
     <div class="table-wrap"><table>${thead}<tbody>${body}</tbody></table></div>
     <div class="note"><strong>📊 各项冠军（每份，基于普通模式DRI）：</strong><br>${champs.join('<br>')}</div>`;
+}
+
+
+// ── Mobile kid switch ──
+function showKid(kid) {
+  const layout = document.getElementById('tracker-layout');
+  if (!layout) return;
+  layout.classList.remove('show-1', 'show-2');
+  layout.classList.add('show-' + kid);
+  [1, 2].forEach(k => {
+    const b = document.getElementById('kid-switch-' + k);
+    if (!b) return;
+    b.className = 'ks-btn' + (k === kid ? ' ks-active-' + k : '');
+    b.setAttribute('aria-selected', k === kid ? 'true' : 'false');
+  });
+  try { localStorage.setItem('nutrition_shown_kid', String(kid)); } catch(e) {}
+  // jump back to the top of the tracker if we've scrolled past it
+  const sw = document.getElementById('kid-switch');
+  if (sw && window.matchMedia && window.matchMedia('(max-width:680px)').matches) {
+    const top = layout.getBoundingClientRect().top;
+    if (top < 0) window.scrollBy({top: top - sw.offsetHeight, behavior: 'smooth'});
+  }
+}
+function initKidSwitch() {
+  const tb = document.getElementById('main-tab-bar');
+  const root = document.documentElement;
+  if (tb && root && root.style) root.style.setProperty('--tabbar-h', (tb.offsetHeight || 44) + 'px');
+  [1, 2].forEach(k => {
+    const inp = document.getElementById('k' + k + '-name'), lab = document.getElementById('ks-name-' + k);
+    if (!inp || !lab) return;
+    const sync = () => { lab.textContent = inp.value || (k === 1 ? '大宝' : '小宝'); };
+    sync(); inp.addEventListener('input', sync);
+  });
+  let saved = 1;
+  try { saved = Number(localStorage.getItem('nutrition_shown_kid')) || 1; } catch(e) {}
+  showKid(saved === 2 ? 2 : 1);
 }
 
 async function bootWithAuth() {
